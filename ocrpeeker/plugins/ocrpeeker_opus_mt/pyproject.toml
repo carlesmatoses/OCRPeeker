@@ -1,0 +1,16 @@
+[project]
+name = "ocrpeeker-opus-mt"
+version = "0.1.0"
+
+dependencies = [
+    "ocrpeeker",
+    "transformers>=4.40.0",
+    "torch>=2.0.0",
+    "sentencepiece>=0.1.99",
+]
+
+[project.entry-points."ocrpeeker.translation"]
+opus-mt = "ocrpeeker_opus_mt:OpusMTTranslator"
+
+[tool.uv.sources]
+ocrpeeker = { workspace = true }

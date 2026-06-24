@@ -1,14 +1,21 @@
-from ocrpeeker import config
+from typing import Dict, Type
+from .base import Translator
+from importlib.metadata import entry_points
 
 
-def translate(text: str) -> str:
-    engine = config.get(config.TRANSLATION_CONFIG, "engine")
-    source = config.get(config.TRANSLATION_CONFIG, "source_lang")
-    target = config.get(config.TRANSLATION_CONFIG, "target_lang")
-    if engine == "opus-mt":
-        from ocrpeeker.translation.opus_mt import translate as _translate
-        return _translate(text, source, target)
-    if engine == "deepl":
-        from ocrpeeker.translation.deepl import translate as _translate
-        return _translate(text, source, target)
-    raise ValueError(f"Unknown translation engine: {engine}")
+_REGISTRY: Dict[str, Type[Translator]] = {}
+
+
+def register(name: str, backend: Type[Translator]):
+    _REGISTRY[name] = backend
+
+
+def get(name: str) -> Translator:
+    if name not in _REGISTRY:
+        raise ValueError(f"Unknown translation backend: {name}")
+    return _REGISTRY[name]()
+
+
+def load_plugins():
+    for ep in entry_points(group="ocrpeeker.translation"):
+        register(ep.name, ep.load())

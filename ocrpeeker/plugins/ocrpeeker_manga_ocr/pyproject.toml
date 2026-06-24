@@ -1,0 +1,15 @@
+[project]
+name = "ocrpeeker-manga-ocr"
+version = "0.1.0"
+
+dependencies = [
+    "ocrpeeker",
+    "manga-ocr",
+    "pillow"
+]
+
+[project.entry-points."ocrpeeker.ocr"]
+manga-ocr = "ocrpeeker_manga_ocr:MangaOCRBackend"
+
+[tool.uv.sources]
+ocrpeeker = { workspace = true }

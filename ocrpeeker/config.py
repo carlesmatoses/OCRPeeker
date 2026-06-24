@@ -29,3 +29,11 @@ def set(section: str, key: str, value: str) -> None:
     cp[section][key] = value
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         cp.write(f)
+
+
+def get_ocr_engine() -> str:
+    return get(OCR_CONFIG, "engine")
+
+
+def get_translation_engine() -> str:
+    return get(TRANSLATION_CONFIG, "engine")

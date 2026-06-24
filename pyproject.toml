@@ -5,25 +5,26 @@ description = "Screen overlay OCR and translation tool"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "manga-ocr>=0.1.11",
-    "mss>=9.0.1",
-    "pynput>=1.7.6",
-    "pywebview>=5.0.5",
     "pillow>=10.0.0",
     "pyyaml>=6.0.1",
     "requests>=2.31.0",
-]
-
-[project.optional-dependencies]
-translation = [
-    "transformers>=4.40.0",
-    "torch>=2.0.0",
-    "sentencepiece>=0.1.99",
+    "pykakasi>=2.3.0",
 ]
 
 [project.scripts]
-ocrpeeker = "ocrpeeker.main:main"
+ocrpeeker = "ocrpeeker.daemon:main"
+ocrpeeker-client = "ocrpeeker.client:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.uv.workspace]
+members = [
+    "ocrpeeker/plugins/ocrpeeker_manga_ocr",
+    "ocrpeeker/plugins/ocrpeeker_opus_mt",
+]
+
+[tool.uv.sources]
+ocrpeeker-manga-ocr = { workspace = true, editable = true }
+ocrpeeker-opus-mt = { workspace = true, editable = true }
