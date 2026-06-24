@@ -88,28 +88,12 @@ class ResultWindow:
         self._translation_frame.pack(fill="x", padx=pad, pady=(8, pad))
 
     def _render_translation_rows(self, rows: list[TranslationRow]):
-        W = self._w
-        pad = 16
-
         for widget in self._translation_frame.winfo_children():
             widget.destroy()
 
         for i, row in enumerate(rows):
-            weight = "bold" if row.bold else "normal"
-            slant = "italic" if row.italic else "roman"
-            font = (row.font_family, row.font_size, weight, slant)
-            text = row.text
-
-            row_frame = tk.Frame(self._translation_frame, bg="#1e1e2e")
-            row_frame.pack(fill="x", pady=(0, 4) if i < len(rows) - 1 else 0)
-
-            tk.Label(
-                row_frame, text=text, bg="#1e1e2e", fg=row.color,
-                font=font, wraplength=W - 60,
-                justify="left", anchor="w",
-            ).pack(side="left", fill="x", expand=True)
-
-            self._clip_btn(row_frame, lambda t=text: t).pack(side="right", anchor="n")
+            frame = row.render(self._translation_frame, self._clip_btn)
+            frame.pack(fill="x", pady=(0, 4) if i < len(rows) - 1 else 0)
 
             if i < len(rows) - 1:
                 tk.Frame(self._translation_frame, bg="#313244", height=1).pack(
