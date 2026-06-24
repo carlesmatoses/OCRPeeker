@@ -8,12 +8,12 @@ dependencies = [
     "pillow>=10.0.0",
     "pyyaml>=6.0.1",
     "requests>=2.31.0",
-    "pykakasi>=2.3.0",
 ]
 
 [project.optional-dependencies]
 manga-ocr = ["ocrpeeker-manga-ocr"]
 opus-mt = ["ocrpeeker-opus-mt"]
+opus-mt-jp = ["ocrpeeker-opus-mt-jp"]
 
 [project.scripts]
 ocrpeeker = "ocrpeeker.daemon:main"
@@ -33,8 +33,10 @@ build-backend = "hatchling.build"
 members = [
     "ocrpeeker/plugins/ocrpeeker_manga_ocr",
     "ocrpeeker/plugins/ocrpeeker_opus_mt",
+    "ocrpeeker/plugins/ocrpeeker_opus_mt_jp",
 ]
 
 [tool.uv.sources]
 ocrpeeker-manga-ocr = { workspace = true, editable = true }
 ocrpeeker-opus-mt = { workspace = true, editable = true }
+ocrpeeker-opus-mt-jp = { workspace = true, editable = true }

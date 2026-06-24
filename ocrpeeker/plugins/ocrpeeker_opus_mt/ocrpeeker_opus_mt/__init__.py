@@ -1,23 +1,22 @@
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 from ocrpeeker.translation.base import Translator
+from ocrpeeker.translation.types import TranslationRow
 from ocrpeeker import config
 
 
 class OpusMTTranslator(Translator):
     def __init__(self):
+        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
         source = config.get(config.TRANSLATION_CONFIG, "source_lang")
         target = config.get(config.TRANSLATION_CONFIG, "target_lang")
-
         model_name = f"Helsinki-NLP/opus-mt-{source}-{target}"
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        self._tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self._model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 
-    def translate(self, text: str) -> str:
-        inputs = self.tokenizer(text, return_tensors="pt")
+    def translate(self, text: str) -> list[TranslationRow]:
+        inputs = self._tokenizer(text, return_tensors="pt")
+        outputs = self._model.generate(**inputs, max_length=512)
+        translated = self._tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-        outputs = self.model.generate(**inputs, max_length=512)
-
-        return self.tokenizer.decode(
-            outputs[0],
-            skip_special_tokens=True,
-        )
+        return [
+            TranslationRow(text=translated, color="#a6e3a1", font_size=11),
+        ]

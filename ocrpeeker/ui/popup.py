@@ -1,17 +1,25 @@
 import tkinter as tk
 from PIL import Image, ImageTk
+from ocrpeeker import config
+from ocrpeeker.translation.types import TranslationRow
 
 
 class ResultWindow:
     def __init__(self):
+        self._w = int(config.get(config.UI_CONFIG, "window_width"))
+        self._min_h = int(config.get(config.UI_CONFIG, "window_min_height"))
+        self._img_h = int(config.get(config.UI_CONFIG, "image_height"))
+
         self._root = tk.Tk()
         self._root.title("OCRPeeker")
         self._root.configure(bg="#1e1e2e")
         self._root.attributes("-topmost", True)
+        self._root.minsize(self._w, self._min_h)
         self._root.protocol("WM_DELETE_WINDOW", self.hide)
         self._root.bind("<Escape>", lambda e: self.hide())
 
         self._photo = None
+        self._translation_frame = None
         self._build()
         self.hide()
 
@@ -30,25 +38,38 @@ class ResultWindow:
         self._root.clipboard_append(text)
         self._root.update()
 
+    def _fit_image(self, image: Image.Image) -> ImageTk.PhotoImage:
+        src_w, src_h = image.size
+        scale = min(self._w / src_w, self._img_h / src_h)
+        new_w = int(src_w * scale)
+        new_h = int(src_h * scale)
+        return ImageTk.PhotoImage(image.resize((new_w, new_h), Image.LANCZOS))
+
     def _build(self):
-        W = 460
+        pad = 16
+        W = self._w
 
-        # Row 1 — image
+        # Row — image canvas
         img_row = tk.Frame(self._root, bg="#1e1e2e")
-        img_row.pack(fill="x", padx=16, pady=(16, 8))
+        img_row.pack(fill="x", padx=pad, pady=(pad, 8))
 
-        self._img_label = tk.Label(img_row, bg="#1e1e2e")
-        self._img_label.pack(side="left", expand=True)
+        self._canvas = tk.Canvas(
+            img_row, bg="#1e1e2e", highlightthickness=0,
+            width=W - pad, height=self._img_h,
+        )
+        self._canvas.pack(side="left", expand=True)
+        self._canvas_img = self._canvas.create_image(
+            (W - pad) // 2, self._img_h // 2, anchor="center"
+        )
 
         self._img_text = ""
-        self._clip_img = self._clip_btn(img_row, lambda: self._img_text)
-        self._clip_img.pack(side="right", anchor="n")
+        self._clip_btn(img_row, lambda: self._img_text).pack(side="right", anchor="n")
 
-        tk.Frame(self._root, bg="#313244", height=1).pack(fill="x", padx=16)
+        tk.Frame(self._root, bg="#313244", height=1).pack(fill="x", padx=pad)
 
-        # Row 2 — OCR text
+        # Row — OCR text
         ocr_row = tk.Frame(self._root, bg="#1e1e2e")
-        ocr_row.pack(fill="x", padx=16, pady=(8, 4))
+        ocr_row.pack(fill="x", padx=pad, pady=(8, 4))
 
         self._ocr_label = tk.Label(
             ocr_row, text="", bg="#1e1e2e", fg="#cdd6f4",
@@ -58,41 +79,52 @@ class ResultWindow:
         self._ocr_label.pack(side="left", fill="x", expand=True)
 
         self._ocr_text = ""
-        self._clip_ocr = self._clip_btn(ocr_row, lambda: self._ocr_text)
-        self._clip_ocr.pack(side="right", anchor="n")
+        self._clip_btn(ocr_row, lambda: self._ocr_text).pack(side="right", anchor="n")
 
-        tk.Frame(self._root, bg="#313244", height=1).pack(fill="x", padx=16)
+        tk.Frame(self._root, bg="#313244", height=1).pack(fill="x", padx=pad)
 
-        # Row 3 — translation
-        tr_row = tk.Frame(self._root, bg="#1e1e2e")
-        tr_row.pack(fill="x", padx=16, pady=(8, 16))
+        # Container for dynamic translation rows
+        self._translation_frame = tk.Frame(self._root, bg="#1e1e2e")
+        self._translation_frame.pack(fill="x", padx=pad, pady=(8, pad))
 
-        self._tr_label = tk.Label(
-            tr_row, text="", bg="#1e1e2e", fg="#a6e3a1",
-            font=("Sans", 11), wraplength=W - 60,
-            justify="left", anchor="w",
-        )
-        self._tr_label.pack(side="left", fill="x", expand=True)
+    def _render_translation_rows(self, rows: list[TranslationRow]):
+        W = self._w
+        pad = 16
 
-        self._tr_text = ""
-        self._clip_tr = self._clip_btn(tr_row, lambda: self._tr_text)
-        self._clip_tr.pack(side="right", anchor="n")
+        for widget in self._translation_frame.winfo_children():
+            widget.destroy()
 
-    def update(self, text: str, translation: str, image: Image.Image):
+        for i, row in enumerate(rows):
+            weight = "bold" if row.bold else "normal"
+            slant = "italic" if row.italic else "roman"
+            font = (row.font_family, row.font_size, weight, slant)
+            text = row.text
+
+            row_frame = tk.Frame(self._translation_frame, bg="#1e1e2e")
+            row_frame.pack(fill="x", pady=(0, 4) if i < len(rows) - 1 else 0)
+
+            tk.Label(
+                row_frame, text=text, bg="#1e1e2e", fg=row.color,
+                font=font, wraplength=W - 60,
+                justify="left", anchor="w",
+            ).pack(side="left", fill="x", expand=True)
+
+            self._clip_btn(row_frame, lambda t=text: t).pack(side="right", anchor="n")
+
+            if i < len(rows) - 1:
+                tk.Frame(self._translation_frame, bg="#313244", height=1).pack(
+                    fill="x", pady=(4, 0)
+                )
+
+    def update(self, text: str, rows: list[TranslationRow], image: Image.Image):
         self._ocr_text = text
-        self._tr_text = translation
         self._img_text = text
 
         self._ocr_label.config(text=text)
-        self._tr_label.config(text=translation)
+        self._render_translation_rows(rows)
 
-        # Scale image to 10% of window height
-        self._root.update_idletasks()
-        max_h = max(1, int(self._root.winfo_height() * 0.10))
-        thumb = image.copy()
-        thumb.thumbnail((self._root.winfo_width(), max_h))
-        self._photo = ImageTk.PhotoImage(thumb)
-        self._img_label.config(image=self._photo)
+        self._photo = self._fit_image(image)
+        self._canvas.itemconfig(self._canvas_img, image=self._photo)
 
     def show(self):
         self._root.deiconify()

@@ -9,11 +9,13 @@ CONFIG_FILE = CONFIG_DIR / "config.ini"
 OCR_CONFIG = "OCR"
 TRANSLATION_CONFIG = "TRANSLATION"
 ANKI_CONFIG = "ANKI"
+UI_CONFIG = "UI"
 
 DEFAULTS = {
     OCR_CONFIG: {"engine": "manga-ocr", "language": "ja"},
     TRANSLATION_CONFIG: {"engine": "opus-mt", "source_lang": "ja", "target_lang": "en"},
     ANKI_CONFIG: {"server": "http://127.0.0.1:8765", "deck": "Japanese", "model": "Basic", "tags": "OCRPeeker"},
+    UI_CONFIG: {"window_width": "460", "window_min_height": "200", "image_height": "150"},
 }
 
 
