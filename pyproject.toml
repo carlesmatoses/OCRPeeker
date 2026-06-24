@@ -11,6 +11,10 @@ dependencies = [
     "pykakasi>=2.3.0",
 ]
 
+[project.optional-dependencies]
+manga-ocr = ["ocrpeeker-manga-ocr"]
+opus-mt = ["ocrpeeker-opus-mt"]
+
 [project.scripts]
 ocrpeeker = "ocrpeeker.daemon:main"
 ocrpeeker-client = "ocrpeeker.client:main"

@@ -1,5 +1,5 @@
 from typing import Dict, Type
-from .base import OCRBackend
+from .base import OCRBackend, EmptyOCRBackend
 from importlib.metadata import entry_points
 import logging
 
@@ -36,7 +36,7 @@ def register(name: str, backend: Type[OCRBackend]):
 def get(name: str) -> OCRBackend:
     if name not in _REGISTRY:
         error_unknown_ocr(name)
-        return OCRBackend()
+        return EmptyOCRBackend()
     return _REGISTRY[name]()
 
 
