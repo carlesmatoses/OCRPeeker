@@ -1,5 +1,6 @@
 from configparser import ConfigParser
 from pathlib import Path
+import shutil
 import os
 
 CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ocrpeeker"
@@ -16,14 +17,20 @@ DEFAULTS = {
 }
 
 
+KEYBINDINGS_SRC = Path(__file__).parent / "ocrpeeker_keybindings.conf"
+KEYBINDINGS_DST = CONFIG_DIR / "ocrpeeker_keybindings.conf"
+
+
 def _ensure_config():
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     if not CONFIG_FILE.exists():
-        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         cp = ConfigParser()
         for section, values in DEFAULTS.items():
             cp[section] = values
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             cp.write(f)
+    if not KEYBINDINGS_DST.exists() and KEYBINDINGS_SRC.exists():
+        shutil.copy(KEYBINDINGS_SRC, KEYBINDINGS_DST)
 
 
 def _read() -> ConfigParser:

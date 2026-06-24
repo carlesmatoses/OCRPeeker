@@ -19,6 +19,12 @@ opus-mt = ["ocrpeeker-opus-mt"]
 ocrpeeker = "ocrpeeker.daemon:main"
 ocrpeeker-client = "ocrpeeker.client:main"
 
+[tool.hatch.build.targets.wheel]
+include = [
+    "ocrpeeker/",
+    "ocrpeeker/ocrpeeker_keybindings.conf",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
