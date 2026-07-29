@@ -11,9 +11,10 @@ A Wayland-native screen OCR and translation tool for Hyprland. Select a region o
 - Python 3.14+
 - [`uv`](https://docs.astral.sh/uv/)
 - `slurp` and `grim` (Wayland screenshot tools)
+- `tk` (Tcl/Tk, required for the result popup UI)
 
 ```bash
-pacman -S slurp grim
+pacman -S slurp grim tk
 ```
 
 ### Install
@@ -80,16 +81,28 @@ OCRPeeker has no built-in OCR or translation engines. You install the ones you w
 
 ### Install a plugin
 
-Once plugins are published to PyPI, install them using extras:
+Plugins are not yet published to PyPI, so for now install from a local clone of this repo as editable packages:
+
+```bash
+git clone https://github.com/carlesmatoses/OCRPeeker
+cd OCRPeeker
+uv tool install . --with-editable ./ocrpeeker/plugins/ocrpeeker_manga_ocr
+```
+
+Add more `--with-editable` flags to install several plugins at once:
+
+```bash
+uv tool install . \
+  --with-editable ./ocrpeeker/plugins/ocrpeeker_manga_ocr \
+  --with-editable ./ocrpeeker/plugins/ocrpeeker_opus_mt_jp
+```
+
+This reinstalls `ocrpeeker` itself alongside the plugin(s) into the same tool environment, so the existing `ocrpeeker` / `ocrpeeker-client` executables on your `PATH` keep working unchanged.
+
+Once plugins are published to PyPI, this will simplify to:
 
 ```bash
 uv tool install ocrpeeker[manga-ocr,opus-mt-jp]
-```
-
-To install a single plugin into an already-installed OCRPeeker:
-
-```bash
-uv tool install --with ocrpeeker-manga-ocr ocrpeeker
 ```
 
 ### Set the active engine
@@ -123,12 +136,13 @@ This file contains:
 ```
 env = PATH,$PATH:$HOME/.local/bin
 
-exec-once = pgrep -x ocrpeeker || ocrpeeker
-
+bind = CTRL SHIFT, O, exec, pgrep -x ocrpeeker || ocrpeeker
 bind = CTRL SHIFT, P, exec, ocrpeeker-client capture
 bind = CTRL SHIFT, X, exec, ocrpeeker-client toggle
 bind = CTRL SHIFT, Q, exec, ocrpeeker-client quit
 ```
+
+OCRPeeker does not start itself automatically — it stays off until you start it, like any other background app you launch on demand (Docker, etc.). Press `Ctrl+Shift+O` to start the daemon; it stays running until you press `Ctrl+Shift+Q` or reboot.
 
 You can edit `~/.config/ocrpeeker/ocrpeeker_keybindings.conf` freely — it is only written once and never overwritten by updates.
 

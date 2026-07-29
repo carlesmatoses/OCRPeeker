@@ -35,6 +35,19 @@ def run_capture(ocr_backend, translator, window: ResultWindow):
     window.show()
 
 
+def _check_not_already_running():
+    if not SOCKET_PATH.exists():
+        return
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as probe:
+            probe.connect(str(SOCKET_PATH))
+    except OSError:
+        SOCKET_PATH.unlink()
+        return
+    print(f"OCRPeeker daemon already running on {SOCKET_PATH}")
+    raise SystemExit(1)
+
+
 def serve(event_queue: queue.Queue):
     if SOCKET_PATH.exists():
         SOCKET_PATH.unlink()
@@ -57,6 +70,8 @@ def serve(event_queue: queue.Queue):
 
 
 def main():
+    _check_not_already_running()
+
     load_ocr_plugins()
     load_translation_plugins()
 
