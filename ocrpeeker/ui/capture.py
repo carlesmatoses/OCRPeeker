@@ -1,7 +1,7 @@
 import subprocess
 import tempfile
-from PIL import Image
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
@@ -28,10 +28,13 @@ def select_region() -> Region | None:
     return Region(x=x, y=y, width=w, height=h)
 
 
-def capture(region: Region) -> Image.Image:
-    """Use grim to capture a region on Wayland."""
+def capture_png_bytes(region: Region) -> bytes:
+    """Use grim to capture a region on Wayland, returning the raw PNG."""
     geometry = f"{region.x},{region.y} {region.width}x{region.height}"
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
-        path = f.name
-    subprocess.run(["grim", "-g", geometry, path], check=True)
-    return Image.open(path)
+        path = Path(f.name)
+    try:
+        subprocess.run(["grim", "-g", geometry, str(path)], check=True)
+        return path.read_bytes()
+    finally:
+        path.unlink(missing_ok=True)

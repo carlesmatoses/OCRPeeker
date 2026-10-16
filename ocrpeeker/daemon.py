@@ -1,11 +1,12 @@
 import socket
 import threading
 import queue
-import os
 import logging
-from pathlib import Path
+import io
+from PIL import Image
 from ocrpeeker import config
-from ocrpeeker.ui.capture import select_region, capture
+from ocrpeeker import ipc
+from ocrpeeker.ipc import SOCKET_PATH
 from ocrpeeker.ui.popup import ResultWindow
 from ocrpeeker.ocr import get as get_ocr
 from ocrpeeker.ocr import load_plugins as load_ocr_plugins
@@ -13,19 +14,26 @@ from ocrpeeker.translation import get as get_translator
 from ocrpeeker.translation import load_plugins as load_translation_plugins
 
 
-SOCKET_PATH = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")) / "ocrpeeker.sock"
+logger = logging.getLogger(__name__)
 
 _CAPTURE = "capture"
 _TOGGLE = "toggle"
 _QUIT = "quit"
 
 
-def run_capture(ocr_backend, translator, window: ResultWindow):
-    region = select_region()
-    if region is None:
+def process_image(png: bytes, ocr_backend, translator, window: ResultWindow):
+    """Run OCR and translation over an image captured by a client."""
+    if not png:
+        logger.error("Received a capture command with no image attached")
         return
 
-    image = capture(region)
+    try:
+        image = Image.open(io.BytesIO(png))
+        image.load()  # Image.open only reads the header; force the decode here
+    except OSError as exc:
+        logger.error(f"Received an unreadable image: {exc}")
+        return
+
     text = ocr_backend.recognize(image)
     translation = translator.translate(text)
 
@@ -61,9 +69,15 @@ def serve(event_queue: queue.Queue):
     try:
         while True:
             conn, _ = server.accept()
-            with conn:
-                cmd = conn.recv(64).decode().strip()
-            event_queue.put(cmd)
+            try:
+                with conn:
+                    message = ipc.recv_message(conn)
+            except (ipc.ProtocolError, OSError, UnicodeDecodeError) as exc:
+                logger.warning(f"Dropping malformed message: {exc}")
+                continue
+            if message is None:
+                continue
+            event_queue.put(message)
     finally:
         server.close()
         if SOCKET_PATH.exists():
@@ -98,14 +112,14 @@ def main():
 
     def process_events():
         while not event_queue.empty():
-            cmd = event_queue.get_nowait()
-            print(f"Got command: {cmd!r}", flush=True)
+            cmd, payload = event_queue.get_nowait()
+            print(f"Got command: {cmd!r} ({len(payload)} bytes payload)", flush=True)
             if cmd == _QUIT:
                 window.hide()
                 window._root.quit()
                 return
             if cmd == _CAPTURE:
-                run_capture(ocr_backend, translator_backend, window)
+                process_image(payload, ocr_backend, translator_backend, window)
             if cmd == _TOGGLE:
                 window.toggle()
         window._root.after(100, process_events)

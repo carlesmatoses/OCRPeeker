@@ -23,12 +23,12 @@ pacman -S slurp grim tk
 uv tool install "git+https://github.com/carlesmatoses/OCRPeeker"
 ```
 
-This installs two executables into `~/.local/bin`:
+This installs one executable into `~/.local/bin`:
 
 | Command | Purpose |
 |---|---|
 | `ocrpeeker` | Start the daemon |
-| `ocrpeeker-client` | Send commands to the running daemon |
+| `ocrpeeker <command>` | Send a command to the running daemon |
 
 ### Files created on first run
 
@@ -86,18 +86,16 @@ Plugins are not yet published to PyPI, so for now install from a local clone of 
 ```bash
 git clone https://github.com/carlesmatoses/OCRPeeker
 cd OCRPeeker
-uv tool install . --with-editable ./plugins/ocrpeeker_manga_ocr
-```
-
-Add more `--with-editable` flags to install several plugins at once:
-
-```bash
 uv tool install . \
   --with-editable ./plugins/ocrpeeker_manga_ocr \
   --with-editable ./plugins/ocrpeeker_opus_mt_jp
 ```
 
-This reinstalls `ocrpeeker` itself alongside the plugin(s) into the same tool environment, so the existing `ocrpeeker` / `ocrpeeker-client` executables on your `PATH` keep working unchanged.
+This reinstalls `ocrpeeker` itself alongside the plugins into the same tool environment, so the existing `ocrpeeker` executable on your `PATH` keeps working unchanged.
+
+> **`uv tool install` is declarative — list every plugin you want, every time.** Each run rebuilds the tool environment to match exactly what you pass it, so anything not listed is *uninstalled*. Installing a second plugin with its own `uv tool install` call will silently remove the first.
+>
+> Note also that `uv tool install ./plugins/ocrpeeker_manga_ocr` does not work: `uv tool` installs applications, and a plugin ships no executable of its own.
 
 Once plugins are published to PyPI, this will simplify to:
 
@@ -136,10 +134,10 @@ This file contains:
 ```
 env = PATH,$PATH:$HOME/.local/bin
 
-bind = CTRL SHIFT, O, exec, pgrep -x ocrpeeker || ocrpeeker
-bind = CTRL SHIFT, P, exec, ocrpeeker-client capture
-bind = CTRL SHIFT, X, exec, ocrpeeker-client toggle
-bind = CTRL SHIFT, Q, exec, ocrpeeker-client quit
+bind = CTRL SHIFT, O, exec, ocrpeeker
+bind = CTRL SHIFT, P, exec, ocrpeeker capture
+bind = CTRL SHIFT, X, exec, ocrpeeker toggle
+bind = CTRL SHIFT, Q, exec, ocrpeeker quit
 ```
 
 OCRPeeker does not start itself automatically — it stays off until you start it, like any other background app you launch on demand (Docker, etc.). Press `Ctrl+Shift+O` to start the daemon; it stays running until you press `Ctrl+Shift+Q` or reboot.
@@ -150,9 +148,11 @@ You can edit `~/.config/ocrpeeker/ocrpeeker_keybindings.conf` freely — it is o
 
 | Command | What it does |
 |---|---|
-| `ocrpeeker-client capture` | Open region selector, OCR the selection, show result |
-| `ocrpeeker-client toggle` | Show or hide the result window |
-| `ocrpeeker-client quit` | Stop the daemon |
+| `ocrpeeker` | Start the daemon (exits with a message if already running) |
+| `ocrpeeker capture` | Open region selector, OCR the selection, show result |
+| `ocrpeeker toggle` | Show or hide the result window |
+| `ocrpeeker quit` | Stop the daemon |
+| `ocrpeeker --help` | List all commands |
 
 ---
 
@@ -176,7 +176,9 @@ uv pip install -e ./plugins/ocrpeeker_opus_mt
 uv pip install -e ./plugins/ocrpeeker_opus_mt_jp
 ```
 
-Run this after `uv sync` since `uv sync` alone does not install workspace members as editable packages.
+Run this after `uv sync`, since `uv sync` alone does not install workspace members as editable packages.
+
+Unlike `uv tool install`, `uv pip install` *is* additive — each line adds to the venv without removing what is already there.
 
 ### Run
 
@@ -189,8 +191,9 @@ uv run ocrpeeker
 ```
 OCRPeeker/
 ├── ocrpeeker/
-│   ├── daemon.py                     # Daemon entrypoint, socket listener
-│   ├── client.py                     # CLI client that talks to the daemon
+│   ├── cli.py                        # Argument parsing, command dispatch
+│   ├── daemon.py                     # Long-running process, socket listener
+│   ├── ipc.py                        # Socket path and length-prefixed framing
 │   ├── config.py                     # Config file management
 │   ├── ocrpeeker_keybindings.conf    # Hyprland keybindings template (shipped)
 │   ├── ocr/
