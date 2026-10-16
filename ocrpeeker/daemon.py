@@ -2,6 +2,7 @@ import socket
 import threading
 import queue
 import os
+import logging
 from pathlib import Path
 from ocrpeeker import config
 from ocrpeeker.ui.capture import select_region, capture
@@ -70,6 +71,11 @@ def serve(event_queue: queue.Queue):
 
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s: %(message)s",
+    )
+
     _check_not_already_running()
 
     load_ocr_plugins()

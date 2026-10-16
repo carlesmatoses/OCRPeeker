@@ -86,15 +86,15 @@ Plugins are not yet published to PyPI, so for now install from a local clone of 
 ```bash
 git clone https://github.com/carlesmatoses/OCRPeeker
 cd OCRPeeker
-uv tool install . --with-editable ./ocrpeeker/plugins/ocrpeeker_manga_ocr
+uv tool install . --with-editable ./plugins/ocrpeeker_manga_ocr
 ```
 
 Add more `--with-editable` flags to install several plugins at once:
 
 ```bash
 uv tool install . \
-  --with-editable ./ocrpeeker/plugins/ocrpeeker_manga_ocr \
-  --with-editable ./ocrpeeker/plugins/ocrpeeker_opus_mt_jp
+  --with-editable ./plugins/ocrpeeker_manga_ocr \
+  --with-editable ./plugins/ocrpeeker_opus_mt_jp
 ```
 
 This reinstalls `ocrpeeker` itself alongside the plugin(s) into the same tool environment, so the existing `ocrpeeker` / `ocrpeeker-client` executables on your `PATH` keep working unchanged.
@@ -171,9 +171,9 @@ uv sync
 Plugins must be installed as editable packages into the dev venv:
 
 ```bash
-uv pip install -e ./ocrpeeker/plugins/ocrpeeker_manga_ocr
-uv pip install -e ./ocrpeeker/plugins/ocrpeeker_opus_mt
-uv pip install -e ./ocrpeeker/plugins/ocrpeeker_opus_mt_jp
+uv pip install -e ./plugins/ocrpeeker_manga_ocr
+uv pip install -e ./plugins/ocrpeeker_opus_mt
+uv pip install -e ./plugins/ocrpeeker_opus_mt_jp
 ```
 
 Run this after `uv sync` since `uv sync` alone does not install workspace members as editable packages.
@@ -181,16 +181,15 @@ Run this after `uv sync` since `uv sync` alone does not install workspace member
 ### Run
 
 ```bash
-uv run main.py
+uv run ocrpeeker
 ```
 
 ### Project structure
 
 ```
 OCRPeeker/
-├── main.py                           # Entrypoint
 ├── ocrpeeker/
-│   ├── daemon.py                     # Long-running process, socket listener
+│   ├── daemon.py                     # Daemon entrypoint, socket listener
 │   ├── client.py                     # CLI client that talks to the daemon
 │   ├── config.py                     # Config file management
 │   ├── ocrpeeker_keybindings.conf    # Hyprland keybindings template (shipped)
@@ -201,13 +200,13 @@ OCRPeeker/
 │   │   ├── base.py                   # Translator base class
 │   │   ├── types.py                  # TranslationRow dataclass
 │   │   └── __init__.py               # Plugin registry
-│   ├── ui/
-│   │   ├── capture.py                # slurp + grim region capture
-│   │   └── popup.py                  # Persistent result window
-│   └── plugins/
-│       ├── ocrpeeker_manga_ocr/      # manga-ocr OCR plugin
-│       ├── ocrpeeker_opus_mt/        # Generic opus-mt translation plugin
-│       └── ocrpeeker_opus_mt_jp/     # Japanese translation with romanisation
+│   └── ui/
+│       ├── capture.py                # slurp + grim region capture
+│       └── popup.py                  # Persistent result window
+├── plugins/
+│   ├── ocrpeeker_manga_ocr/          # manga-ocr OCR plugin
+│   ├── ocrpeeker_opus_mt/            # Generic opus-mt translation plugin
+│   └── ocrpeeker_opus_mt_jp/         # Japanese translation with romanisation
 └── pyproject.toml
 ```
 
