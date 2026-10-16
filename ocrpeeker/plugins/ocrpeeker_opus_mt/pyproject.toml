@@ -14,3 +14,7 @@ opus-mt = "ocrpeeker_opus_mt:OpusMTTranslator"
 
 [tool.uv.sources]
 ocrpeeker = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

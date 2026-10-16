@@ -15,3 +15,7 @@ opus-mt-jp = "ocrpeeker_opus_mt_jp:OpusMTTranslatorJP"
 
 [tool.uv.sources]
 ocrpeeker = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
