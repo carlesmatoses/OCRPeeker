@@ -37,8 +37,8 @@ def process_image(png: bytes, ocr_backend, translator, window: ResultWindow):
     text = ocr_backend.recognize(image)
     translation = translator.translate(text)
 
-    print(f"Recognized text: {text!r}")
-    print(f"Translation: {translation!r}")
+    logger.info(f"Recognized text: {text!r}")
+    logger.info(f"Translation: {translation!r}")
 
     window.update(text, translation, image)
     window.show()
@@ -53,7 +53,7 @@ def _check_not_already_running():
     except OSError:
         SOCKET_PATH.unlink()
         return
-    print(f"OCRPeeker daemon already running on {SOCKET_PATH}")
+    logger.error(f"OCRPeeker daemon already running on {SOCKET_PATH}")
     raise SystemExit(1)
 
 
@@ -64,7 +64,7 @@ def serve(event_queue: queue.Queue):
     server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server.bind(str(SOCKET_PATH))
     server.listen(1)
-    print(f"OCRPeeker daemon listening on {SOCKET_PATH}")
+    logger.info(f"OCRPeeker daemon listening on {SOCKET_PATH}")
 
     try:
         while True:
@@ -85,25 +85,20 @@ def serve(event_queue: queue.Queue):
 
 
 def main():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(levelname)s: %(message)s",
-    )
-
     _check_not_already_running()
 
     load_ocr_plugins()
     load_translation_plugins()
 
     engine = config.get_ocr_engine()
-    print(f"Loading OCR backend: {engine}")
+    logger.info(f"Loading OCR backend: {engine}")
     ocr_backend = get_ocr(engine)
-    print("OCR ready.")
+    logger.info("OCR ready.")
 
     translator = config.get_translation_engine()
-    print(f"Loading translation backend: {translator}")
+    logger.info(f"Loading translation backend: {translator}")
     translator_backend = get_translator(translator)
-    print("Translation ready.")
+    logger.info("Translation ready.")
 
     window = ResultWindow()
 
@@ -113,7 +108,7 @@ def main():
     def process_events():
         while not event_queue.empty():
             cmd, payload = event_queue.get_nowait()
-            print(f"Got command: {cmd!r} ({len(payload)} bytes payload)", flush=True)
+            logger.debug(f"Got command: {cmd!r} ({len(payload)} bytes payload)")
             if cmd == _QUIT:
                 window.hide()
                 window._root.quit()

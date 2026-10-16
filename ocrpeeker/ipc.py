@@ -2,7 +2,10 @@ import socket
 import struct
 import sys
 import os
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 SOCKET_PATH = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")) / "ocrpeeker.sock"
 
@@ -35,17 +38,18 @@ def _recv_exactly(conn: socket.socket, n: int) -> bytes | None:
 
 
 def send_message(cmd: str, payload: bytes = b"") -> None:
-    if not SOCKET_PATH.exists():
-        print(f"OCRPeeker daemon is not running (no socket at {SOCKET_PATH})", file=sys.stderr)
-        sys.exit(1)
-
     body = cmd.encode("utf-8") + b"\n" + payload
     if len(body) > MAX_MESSAGE_BYTES:
         raise ProtocolError(f"message too large: {len(body)} bytes")
 
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-        s.connect(str(SOCKET_PATH))
-        s.sendall(_HEADER.pack(len(body)) + body)
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+            s.connect(str(SOCKET_PATH))
+            s.sendall(_HEADER.pack(len(body)) + body)
+    except (FileNotFoundError, ConnectionRefusedError):
+        # No socket, or a stale one left behind by a daemon that died.
+        logger.error(f"OCRPeeker daemon is not running (no socket at {SOCKET_PATH})")
+        sys.exit(1)
 
 
 def recv_message(conn: socket.socket) -> tuple[str, bytes] | None:
