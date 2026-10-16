@@ -13,3 +13,7 @@ manga-ocr = "ocrpeeker_manga_ocr:MangaOCRBackend"
 
 [tool.uv.sources]
 ocrpeeker = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
