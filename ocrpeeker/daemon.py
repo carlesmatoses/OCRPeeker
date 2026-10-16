@@ -10,8 +10,10 @@ from ocrpeeker.ipc import SOCKET_PATH
 from ocrpeeker.ui.popup import ResultWindow
 from ocrpeeker.ocr import get as get_ocr
 from ocrpeeker.ocr import load_plugins as load_ocr_plugins
+from ocrpeeker.ocr.base import EmptyOCRBackend
 from ocrpeeker.translation import get as get_translator
 from ocrpeeker.translation import load_plugins as load_translation_plugins
+from ocrpeeker.translation.base import EmptyTranslator
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +25,13 @@ _QUIT = "quit"
 
 def process_image(png: bytes, ocr_backend, translator, window: ResultWindow):
     """Run OCR and translation over an image captured by a client."""
+    if isinstance(ocr_backend, EmptyOCRBackend):
+        logger.error(
+            "Cannot process capture: no OCR backend is loaded. "
+            "Install a plugin and set [OCR] engine, then restart the daemon."
+        )
+        return
+
     if not png:
         logger.error("Received a capture command with no image attached")
         return
@@ -93,12 +102,18 @@ def main():
     engine = config.get_ocr_engine()
     logger.info(f"Loading OCR backend: {engine}")
     ocr_backend = get_ocr(engine)
-    logger.info("OCR ready.")
+    if isinstance(ocr_backend, EmptyOCRBackend):
+        logger.error("OCR is unavailable. Captures will be rejected until a backend is installed.")
+    else:
+        logger.info("OCR ready.")
 
     translator = config.get_translation_engine()
     logger.info(f"Loading translation backend: {translator}")
     translator_backend = get_translator(translator)
-    logger.info("Translation ready.")
+    if isinstance(translator_backend, EmptyTranslator):
+        logger.warning("Translation is unavailable. Captures will show OCR text only.")
+    else:
+        logger.info("Translation ready.")
 
     window = ResultWindow()
 
@@ -106,17 +121,22 @@ def main():
     threading.Thread(target=serve, args=(event_queue,), daemon=True).start()
 
     def process_events():
-        while not event_queue.empty():
-            cmd, payload = event_queue.get_nowait()
-            logger.debug(f"Got command: {cmd!r} ({len(payload)} bytes payload)")
-            if cmd == _QUIT:
-                window.hide()
-                window._root.quit()
-                return
-            if cmd == _CAPTURE:
-                process_image(payload, ocr_backend, translator_backend, window)
-            if cmd == _TOGGLE:
-                window.toggle()
+        try:
+            while not event_queue.empty():
+                cmd, payload = event_queue.get_nowait()
+                logger.debug(f"Got command: {cmd!r} ({len(payload)} bytes payload)")
+                if cmd == _QUIT:
+                    window.hide()
+                    window._root.quit()
+                    return
+                if cmd == _CAPTURE:
+                    process_image(payload, ocr_backend, translator_backend, window)
+                if cmd == _TOGGLE:
+                    window.toggle()
+        except Exception:
+            # Never let one failed command stop the poll loop below from being
+            # rescheduled; that would leave the daemon alive but deaf.
+            logger.exception("Error while handling a command")
         window._root.after(100, process_events)
 
     window._root.after(100, process_events)
