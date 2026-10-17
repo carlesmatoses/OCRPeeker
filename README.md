@@ -61,6 +61,10 @@ tags = OCRPeeker
 window_width = 460
 window_min_height = 200
 image_height = 150
+
+[SEGMENTER]
+segmenter = manga-segmenter
+threshold = 0.5
 ```
 
 Edit this file to change engines, language pairs, or UI dimensions. Changes take effect on the next daemon restart.
@@ -78,6 +82,7 @@ OCRPeeker has no built-in OCR or translation engines. You install the ones you w
 | `ocrpeeker-manga-ocr` | `manga-ocr` | Local OCR for manga/Japanese text |
 | `ocrpeeker-opus-mt` | `opus-mt` | Local neural translation (generic) |
 | `ocrpeeker-opus-mt-jp` | `opus-mt-jp` | Local translation with romanisation and kanji annotation |
+| `ocrpeeker-manga-segmenter` | `manga-segmenter` | Finds text regions on manga/comic pages (used by `ocrpeeker segment`) |
 
 ### Install a plugin
 
@@ -152,6 +157,7 @@ You can edit `~/.config/ocrpeeker/ocrpeeker_keybindings.conf` freely — it is o
 | `ocrpeeker capture` | Open region selector, OCR the selection, show result |
 | `ocrpeeker toggle` | Show or hide the result window |
 | `ocrpeeker quit` | Stop the daemon |
+| `ocrpeeker segment <input> [-o out.json]` | Find text regions in a manga/comic and print them as JSON (runs without the daemon) |
 | `ocrpeeker --help` | List all commands |
 
 ---
@@ -199,6 +205,10 @@ OCRPeeker/
 │   ├── ocr/
 │   │   ├── base.py                   # OCRBackend base class
 │   │   └── __init__.py               # Plugin registry
+│   ├── segmenter/
+│   │   ├── base.py                   # Segmenter base class, Box type
+│   │   ├── pages.py                  # Input dispatch: image/folder/cbz/pdf -> pages
+│   │   └── __init__.py               # Plugin registry, segment() entry point
 │   ├── translation/
 │   │   ├── base.py                   # Translator base class
 │   │   ├── types.py                  # TranslationRow dataclass
@@ -209,13 +219,51 @@ OCRPeeker/
 ├── plugins/
 │   ├── ocrpeeker_manga_ocr/          # manga-ocr OCR plugin
 │   ├── ocrpeeker_opus_mt/            # Generic opus-mt translation plugin
-│   └── ocrpeeker_opus_mt_jp/         # Japanese translation with romanisation
+│   ├── ocrpeeker_opus_mt_jp/         # Japanese translation with romanisation
+│   └── ocrpeeker_manga_segmenter/    # RT-DETR manga text-region segmenter
 └── pyproject.toml
 ```
 
 ---
 
-## 5. Writing Plugins
+## 5. Text Segmentation
+
+Besides the interactive capture flow, OCRPeeker can find every text region in a whole manga or comic, for use by other projects. It returns one list of boxes per page; each box is `(x, y, w, h)`, normalized to `[0, 1]` relative to the page size.
+
+Accepted inputs: a single image, a folder of images (natural order, so `2.jpg` comes before `10.jpg`), a `.cbz`/`.zip` archive, or a `.pdf` (needs `pypdfium2`). From Python you can also pass a PIL image, a numpy array, or a list of any of these.
+
+### From the CLI
+
+```bash
+ocrpeeker segment book.cbz -o boxes.json
+ocrpeeker segment page.png | jq '.pages[0].boxes'
+```
+
+```json
+{
+  "segmenter": "manga-segmenter",
+  "pages": [
+    {"page": 0, "boxes": [[0.71, 0.05, 0.09, 0.21], ...]}
+  ]
+}
+```
+
+### As a library
+
+```python
+from ocrpeeker.segmenter import segment
+
+pages = segment("book.pdf")          # list[list[Box]]
+for p, boxes in enumerate(pages):
+    for box in boxes:
+        x, y, w, h = box
+```
+
+Pass `segmenter="name"` to choose a plugin, or a loaded `Segmenter` instance to reuse the model across calls.
+
+---
+
+## 6. Writing Plugins
 
 ### OCR Backend
 
@@ -324,3 +372,29 @@ return [
 ```
 
 Each row gets its own copy-to-clipboard button automatically.
+
+---
+
+### Segmenter Backend
+
+```toml
+[project.entry-points."ocrpeeker.segmenter"]
+my-segmenter = "ocrpeeker_my_segmenter:MySegmenter"
+```
+
+```python
+from PIL import Image
+from ocrpeeker.segmenter.base import Box, Segmenter, normalize_xyxy
+
+class MySegmenter(Segmenter):
+    def __init__(self):
+        # Load your model here.
+        pass
+
+    def segment(self, image: Image.Image) -> list[Box]:
+        # Return normalized boxes; normalize_xyxy converts pixel corners.
+        width, height = image.size
+        return [normalize_xyxy(10, 20, 110, 220, width, height)]
+```
+
+Override `segment_pages(pages)` if your model can process several pages in one batch.

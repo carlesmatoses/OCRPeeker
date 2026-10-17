@@ -8,3 +8,4 @@ uv.lock
 dist/
 build/
 .env
+file_tests

@@ -14,6 +14,8 @@ dependencies = [
 manga-ocr = ["ocrpeeker-manga-ocr"]
 opus-mt = ["ocrpeeker-opus-mt"]
 opus-mt-jp = ["ocrpeeker-opus-mt-jp"]
+manga-segmenter = ["ocrpeeker-manga-segmenter"]
+pdf = ["pypdfium2"]
 
 [project.scripts]
 ocrpeeker = "ocrpeeker.cli:main"
@@ -33,9 +35,11 @@ members = [
     "plugins/ocrpeeker_manga_ocr",
     "plugins/ocrpeeker_opus_mt",
     "plugins/ocrpeeker_opus_mt_jp",
+    "plugins/ocrpeeker_manga_segmenter",
 ]
 
 [tool.uv.sources]
 ocrpeeker-manga-ocr = { workspace = true, editable = true }
 ocrpeeker-opus-mt = { workspace = true, editable = true }
 ocrpeeker-opus-mt-jp = { workspace = true, editable = true }
+ocrpeeker-manga-segmenter = { workspace = true, editable = true }

@@ -10,12 +10,14 @@ OCR_CONFIG = "OCR"
 TRANSLATION_CONFIG = "TRANSLATION"
 ANKI_CONFIG = "ANKI"
 UI_CONFIG = "UI"
+SEGMENTER_CONFIG = "SEGMENTER"
 
 DEFAULTS = {
     OCR_CONFIG: {"engine": "manga-ocr", "language": "ja"},
     TRANSLATION_CONFIG: {"engine": "opus-mt-jp", "source_lang": "ja", "target_lang": "en"},
     ANKI_CONFIG: {"server": "http://127.0.0.1:8765", "deck": "Japanese", "model": "Basic", "tags": "OCRPeeker"},
     UI_CONFIG: {"window_width": "460", "window_min_height": "200", "image_height": "150"},
+    SEGMENTER_CONFIG: {"segmenter": "manga-segmenter", "threshold": "0.5"},
 }
 
 
@@ -65,3 +67,16 @@ def get_ocr_engine() -> str:
 
 def get_translation_engine() -> str:
     return get(TRANSLATION_CONFIG, "engine")
+
+
+def get_or_default(section: str, key: str) -> str:
+    """Like get(), but falls back to DEFAULTS.
+
+    The config file is only written on first run, so sections added later
+    (such as [SEGMENTER]) are missing from existing users' files.
+    """
+    return _read().get(section, key, fallback=DEFAULTS[section][key])
+
+
+def get_segmenter_engine() -> str:
+    return get_or_default(SEGMENTER_CONFIG, "segmenter")

@@ -1,0 +1,20 @@
+[project]
+name = "ocrpeeker-manga-segmenter"
+version = "0.1.0"
+
+dependencies = [
+    "ocrpeeker",
+    "torch",
+    "transformers",
+    "pillow"
+]
+
+[project.entry-points."ocrpeeker.segmenter"]
+manga-segmenter = "ocrpeeker_manga_segmenter:MangaSegmenter"
+
+[tool.uv.sources]
+ocrpeeker = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
