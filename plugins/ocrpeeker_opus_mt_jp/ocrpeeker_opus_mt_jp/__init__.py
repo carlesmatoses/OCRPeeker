@@ -62,30 +62,22 @@ class OpusMTTranslatorJP(Translator):
         self._model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
         self._kks = pykakasi.kakasi()
 
-    def translate(self, text: str) -> list[TranslationRow]:
-        parts = []
-        for item in self._kks.convert(text):
-            orig = item["orig"]
-            hira = item["hira"]
-            if hira and orig != hira:
-                parts.append(f"{orig}({hira})")
-            else:
-                parts.append(orig)
-        annotated = " ".join(parts)
-
-        romanji = " ".join(
-            item["hepburn"] for item in self._kks.convert(text) if item["hepburn"]
-        )
-
+    def translate(self, text: str) -> str:
         inputs = self._tokenizer(text, return_tensors="pt")
         outputs = self._model.generate(**inputs, max_length=512)
-        translated = self._tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return self._tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    def rows(self, text: str, translation: str) -> list[TranslationRow]:
+        items = self._kks.convert(text)
+
+        annotated = " ".join(
+            f"{item['orig']}({item['hira']})" if item["hira"] and item["orig"] != item["hira"] else item["orig"]
+            for item in items
+        )
+        romanji = " ".join(item["hepburn"] for item in items if item["hepburn"])
 
         return [
-            KanjiRow(
-                self._kks.convert(text)
-            ),
-            
+            KanjiRow(items),
             TranslationRow(
                 text=annotated,
                 font_family="Noto Sans CJK JP",
@@ -99,7 +91,7 @@ class OpusMTTranslatorJP(Translator):
                 italic=True,
             ),
             TranslationRow(
-                text=translated,
+                text=translation,
                 font_size=11,
                 color="#a6e3a1",
             ),

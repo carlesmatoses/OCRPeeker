@@ -1,13 +1,13 @@
 from typing import Dict, Type
 from .base import Box, Segmenter, EmptySegmenter
-from .pages import load_pages
+from .pages import iter_pages, iter_page_loaders, load_pages, count_pages
 from importlib.metadata import entry_points
 from ocrpeeker import config
 import logging
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Box", "Segmenter", "load_pages", "segment"]
+__all__ = ["Box", "Segmenter", "iter_pages", "iter_page_loaders", "load_pages", "count_pages", "segment"]
 
 _REGISTRY: Dict[str, Type[Segmenter]] = {}
 
@@ -59,12 +59,17 @@ def segment(source, segmenter: str | Segmenter | None = None) -> list[list[Box]]
     
     Returns one list of normalized Boxes per page.
     """
+    segmenter = resolve(segmenter)
+    # One page at a time, so a whole book is never decoded into memory at once.
+    return [segmenter.segment(page) for page in iter_pages(source)]
+
+
+def resolve(segmenter: str | Segmenter | None) -> Segmenter:
+    """Turn a plugin name, an instance or None (config default) into a loaded Segmenter."""
     if not isinstance(segmenter, Segmenter):
         name = segmenter or config.get_segmenter_engine()
         load_plugins()
         segmenter = get(name)
     if isinstance(segmenter, EmptySegmenter):
         raise RuntimeError("No segmenter is available; see the error above")
-
-    pages = load_pages(source)
-    return segmenter.segment_pages(pages)
+    return segmenter

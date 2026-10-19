@@ -40,6 +40,17 @@ def main():
     seg.add_argument("-o", "--output", help="Write the JSON here instead of stdout")
     seg.add_argument("--segmenter", help="Segmenter plugin to use (default: [SEGMENTER] in config)")
 
+    ann = sub.add_parser(
+        "annotate",
+        help="Segment, OCR and translate every text region of a manga/comic into JSON",
+    )
+    ann.add_argument("input", help="Image, folder of images, .cbz/.zip archive or .pdf")
+    ann.add_argument("-o", "--output", help="Write the JSON here, saving after every page")
+    ann.add_argument("--resume", action="store_true", help="Continue the job saved in --output")
+    ann.add_argument("--segmenter", help="Segmenter plugin (default: [SEGMENTER] in config)")
+    ann.add_argument("--ocr", help="OCR plugin (default: [OCR] in config)")
+    ann.add_argument("--translator", help="Translation plugin (default: [TRANSLATION] in config)")
+
     args = parser.parse_args()
     _configure_logging(args.verbose)
 
@@ -54,6 +65,10 @@ def main():
 
     if args.cmd == "segment":
         _segment(args)
+        return
+
+    if args.cmd == "annotate":
+        _annotate(args, parser)
         return
 
     ipc.send_message(args.cmd)
@@ -101,3 +116,63 @@ def _segment(args):
             f.write(text + "\n")
     else:
         print(text)
+
+
+def _annotate(args, parser):
+    """Run segment -> OCR -> translate in this process; it never talks to the daemon.
+
+    With --output the JSON is rewritten after every page, so a crashed job can
+    be continued with --resume.
+    """
+    import json
+    import os
+    import sys
+    from pathlib import Path
+    from ocrpeeker.annotate import annotate
+    from ocrpeeker.segmenter import count_pages
+
+    log = logging.getLogger("ocrpeeker")
+    if args.resume and not args.output:
+        parser.error("--resume needs --output, the file holding the job to continue")
+
+    source = str(Path(args.input).resolve())
+    state = None
+    if args.resume:
+        try:
+            with open(args.output, encoding="utf-8") as f:
+                state = json.load(f)
+        except (OSError, json.JSONDecodeError) as exc:
+            log.error(f"Cannot resume from {args.output}: {exc}")
+            sys.exit(1)
+        if state.get("source") != source:
+            log.error(f"{args.output} belongs to {state.get('source')}, not {source}")
+            sys.exit(1)
+        if len(state.get("pages", [])) > count_pages(source):
+            log.error(f"{args.output} has more pages than {source}; the input has changed")
+            sys.exit(1)
+        log.info(f"Resuming {args.output} ({len(state['pages'])} pages segmented)")
+
+    def save(state):
+        # Write then rename, so a crash mid-write never corrupts the checkpoint.
+        tmp = f"{args.output}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, args.output)
+
+    try:
+        state = annotate(
+            source,
+            segmenter=args.segmenter,
+            ocr=args.ocr,
+            translator=args.translator,
+            state=state,
+            on_page=save if args.output else None,
+        )
+    except (RuntimeError, FileNotFoundError, ImportError, TypeError, OSError) as exc:
+        log.error(str(exc))
+        sys.exit(1)
+
+    if args.output:
+        save(state)
+    else:
+        print(json.dumps(state, ensure_ascii=False, indent=2))

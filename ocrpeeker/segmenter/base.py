@@ -24,6 +24,17 @@ def normalize_xyxy(x0: float, y0: float, x1: float, y1: float, width: int, heigh
     return Box(left, top, right - left, bottom - top)
 
 
+def crop_box(image: Image.Image, box: Box) -> Image.Image:
+    """Cut a normalized Box out of a page, clamped to the image and at least 1px wide/high."""
+    width, height = image.size
+    x, y, w, h = box
+    left = min(max(round(x * width), 0), width - 1)
+    top = min(max(round(y * height), 0), height - 1)
+    right = min(max(round((x + w) * width), left + 1), width)
+    bottom = min(max(round((y + h) * height), top + 1), height)
+    return image.crop((left, top, right, bottom))
+
+
 class Segmenter(ABC):
     @abstractmethod
     def segment(self, image: Image.Image) -> list[Box]:

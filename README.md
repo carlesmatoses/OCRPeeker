@@ -158,6 +158,7 @@ You can edit `~/.config/ocrpeeker/ocrpeeker_keybindings.conf` freely — it is o
 | `ocrpeeker toggle` | Show or hide the result window |
 | `ocrpeeker quit` | Stop the daemon |
 | `ocrpeeker segment <input> [-o out.json]` | Find text regions in a manga/comic and print them as JSON (runs without the daemon) |
+| `ocrpeeker annotate <input> [-o out.json] [--resume]` | Segment, OCR and translate every text region into JSON (runs without the daemon) |
 | `ocrpeeker --help` | List all commands |
 
 ---
@@ -201,6 +202,7 @@ OCRPeeker/
 │   ├── daemon.py                     # Long-running process, socket listener
 │   ├── ipc.py                        # Socket path and length-prefixed framing
 │   ├── config.py                     # Config file management
+│   ├── annotate.py                   # segment -> OCR -> translate pipeline, resumable
 │   ├── ocrpeeker_keybindings.conf    # Hyprland keybindings template (shipped)
 │   ├── ocr/
 │   │   ├── base.py                   # OCRBackend base class
@@ -260,6 +262,47 @@ for p, boxes in enumerate(pages):
 ```
 
 Pass `segmenter="name"` to choose a plugin, or a loaded `Segmenter` instance to reuse the model across calls.
+
+### Annotating a whole book
+
+`annotate` chains all three steps: it segments every page, OCRs each box, and translates each transcript.
+
+```bash
+ocrpeeker annotate book.pdf -o book.json
+```
+
+```json
+{
+  "source": "/path/to/book.pdf",
+  "segmenter": "manga-segmenter", "ocr": "manga-ocr", "translator": "opus-mt-jp",
+  "pages": [
+    {"page": 0, "notes": [
+      {"box": [0.71, 0.05, 0.09, 0.21],
+       "content": "- transcript: ありがとう\n- translation: Thank you.",
+       "transcript": "ありがとう", "translation": "Thank you."}
+    ]}
+  ]
+}
+```
+
+`content` holds the transcript and translation as one ready-made text block for apps that want a note body. It's rebuilt from the other two fields, so edit those rather than `content`.
+
+It runs in stages, segmentation first, then OCR, then translation, and each stage loads only its own model. Only one page is decoded in memory at a time.
+
+With `-o`, the file is rewritten after every page, and a field that is still `null` hasn't been processed yet. If a job is interrupted, rerun it with `--resume` to continue where it stopped:
+
+```bash
+ocrpeeker annotate book.pdf -o book.json --resume
+```
+
+The engines come from `config.ini` and can be overridden with `--segmenter`, `--ocr` and `--translator`. From Python:
+
+```python
+from ocrpeeker.annotate import annotate
+
+doc = annotate("book.pdf")                         # whole job in memory
+doc = annotate("book.pdf", state=doc, on_page=save) # resume, with a checkpoint callback
+```
 
 ---
 
@@ -342,13 +385,17 @@ class MyTranslator(Translator):
         self._source = config.get(config.TRANSLATION_CONFIG, "source_lang")
         self._target = config.get(config.TRANSLATION_CONFIG, "target_lang")
 
-    def translate(self, text: str) -> list[TranslationRow]:
-        # Return a list of rows to display in the popup.
-        # Each row is rendered as a separate line with its own style.
-        return [
-            TranslationRow(text="...", color="#a6e3a1", font_size=11),
-        ]
+    def translate(self, text: str) -> str:
+        # Return the plain translated text. Used by the popup and by `annotate`.
+        return "..."
+
+    # Optional: override rows() to change what the popup shows. It receives the
+    # source text and the finished translation, and must not translate again.
+    def rows(self, text: str, translation: str) -> list[TranslationRow]:
+        return [TranslationRow(text=translation, color="#a6e3a1", font_size=11)]
 ```
+
+`translate()` is the only required method. By default, `rows()` shows the translation as a single row.
 
 **`TranslationRow` fields**
 
@@ -361,14 +408,16 @@ class MyTranslator(Translator):
 | `bold` | `bool` | `False` | Bold text |
 | `italic` | `bool` | `False` | Italic text |
 
-A translator returning multiple rows for a Japanese input:
+A translator showing multiple rows for a Japanese input:
 
 ```python
-return [
-    TranslationRow(text=annotated,  color="#89b4fa", font_family="Noto Sans CJK JP"),
-    TranslationRow(text=romanji,    color="#6c7086", font_size=10, italic=True),
-    TranslationRow(text=translated, color="#a6e3a1"),
-]
+def rows(self, text, translation):
+    annotated, romanji = ...  # derived from `text`, e.g. with pykakasi
+    return [
+        TranslationRow(text=annotated,  color="#89b4fa", font_family="Noto Sans CJK JP"),
+        TranslationRow(text=romanji,    color="#6c7086", font_size=10, italic=True),
+        TranslationRow(text=translation, color="#a6e3a1"),
+    ]
 ```
 
 Each row gets its own copy-to-clipboard button automatically.

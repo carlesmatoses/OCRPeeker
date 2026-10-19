@@ -49,7 +49,7 @@ def process_image(png: bytes, ocr_backend, translator, window: ResultWindow):
     logger.info(f"Recognized text: {text!r}")
     logger.info(f"Translation: {translation!r}")
 
-    window.update(text, translation, image)
+    window.update(text, translator.rows(text, translation), image)
     window.show()
 
 
