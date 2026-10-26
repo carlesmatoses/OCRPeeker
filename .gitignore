@@ -9,3 +9,4 @@ dist/
 build/
 .env
 file_tests
+tmp_roadmap.txt
