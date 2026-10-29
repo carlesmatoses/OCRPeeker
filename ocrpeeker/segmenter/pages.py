@@ -6,11 +6,12 @@ in memory at once; load_pages is the eager list form of the same thing.
 """
 
 import io
+import logging
 import re
 import zipfile
-import logging
 from collections.abc import Callable, Iterator
 from pathlib import Path
+
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -81,6 +82,7 @@ def _archive_names(archive: zipfile.ZipFile) -> list[str]:
 
 def _open_pdf(path: Path):
     try:
+        # lazy import py
         import pypdfium2 as pdfium
     except ImportError:
         raise ImportError(
@@ -109,7 +111,7 @@ def _path_loaders(path: Path) -> Iterator[PageLoader]:
         try:
             for index in range(len(pdf)):
                 yield lambda index=index: _finalize(
-                    pdf[index].render(scale=PDF_DPI / 72).to_pil()
+                    pdf[index].render(scale=PDF_DPI // 72).to_pil()
                 )
         finally:
             pdf.close()
