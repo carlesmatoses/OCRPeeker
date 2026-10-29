@@ -165,7 +165,7 @@ def _annotate(args, parser):
     from pathlib import Path
 
     from ocrpeeker.annotate import annotate
-    from ocrpeeker.segmenter import count_pages
+    from ocrpeeker.segmenter.pages import count_pages
 
     log = logging.getLogger("ocrpeeker")
     if args.resume and not args.output:

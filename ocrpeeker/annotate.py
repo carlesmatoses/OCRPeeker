@@ -28,12 +28,9 @@ from ocrpeeker import segmenter as segmenter_plugins
 from ocrpeeker import translation as translation_plugins
 from ocrpeeker.errors import OCRBackendUnavailable
 from ocrpeeker.ocr.base import EmptyOCRBackend, OCRBackend
-from ocrpeeker.segmenter import (
-    Segmenter,
-    count_pages,
-    iter_page_loaders,
-)
+from ocrpeeker.segmenter import Segmenter
 from ocrpeeker.segmenter.base import Box, crop_box
+from ocrpeeker.segmenter.pages import count_pages, iter_page_loaders
 from ocrpeeker.translation.base import EmptyTranslator, Translator
 
 logger = logging.getLogger(__name__)
