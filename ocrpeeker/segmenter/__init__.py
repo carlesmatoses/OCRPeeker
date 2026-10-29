@@ -1,9 +1,16 @@
-from typing import Dict, Type
-from .base import Box, Segmenter, EmptySegmenter
-from .pages import iter_pages, iter_page_loaders, load_pages, count_pages
-from importlib.metadata import entry_points
-from ocrpeeker import config
 import logging
+from importlib.metadata import entry_points
+
+from ocrpeeker import config
+from ocrpeeker.errors import SegmenterUnavailable
+
+from .base import Box, EmptySegmenter, Segmenter
+from .pages import (
+    count_pages,
+    iter_page_loaders,
+    iter_pages,
+    load_pages,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +24,7 @@ __all__ = [
     "segment",
 ]
 
-_REGISTRY: Dict[str, Type[Segmenter]] = {}
+_REGISTRY: dict[str, type[Segmenter]] = {}
 
 
 def error_unknown_segmenter(name: str):
@@ -45,7 +52,7 @@ or pass --segmenter on the command line.
     )
 
 
-def register(name: str, backend: Type[Segmenter]):
+def register(name: str, backend: type[Segmenter]):
     _REGISTRY[name] = backend
 
 
@@ -83,5 +90,7 @@ def resolve(segmenter: str | Segmenter | None) -> Segmenter:
         load_plugins()
         segmenter = get(name)
     if isinstance(segmenter, EmptySegmenter):
-        raise RuntimeError("No segmenter is available; see the error above")
+        raise SegmenterUnavailable(
+            "No segmenter is available; see the error above"
+        )
     return segmenter

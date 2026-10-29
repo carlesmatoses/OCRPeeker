@@ -1,6 +1,7 @@
-from typing import NamedTuple
-from PIL import Image
 from abc import ABC, abstractmethod
+from typing import NamedTuple
+
+from PIL import Image
 
 
 class Box(NamedTuple):

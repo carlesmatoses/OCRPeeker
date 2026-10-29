@@ -26,8 +26,13 @@ from ocrpeeker import config
 from ocrpeeker import ocr as ocr_plugins
 from ocrpeeker import segmenter as segmenter_plugins
 from ocrpeeker import translation as translation_plugins
+from ocrpeeker.errors import OCRBackendUnavailable
 from ocrpeeker.ocr.base import EmptyOCRBackend, OCRBackend
-from ocrpeeker.segmenter import Segmenter, count_pages, iter_page_loaders
+from ocrpeeker.segmenter import (
+    Segmenter,
+    count_pages,
+    iter_page_loaders,
+)
 from ocrpeeker.segmenter.base import Box, crop_box
 from ocrpeeker.translation.base import EmptyTranslator, Translator
 
@@ -204,7 +209,9 @@ def _resolve_ocr(backend: str | OCRBackend) -> OCRBackend:
         ocr_plugins.load_plugins()
         backend = ocr_plugins.get(backend)
     if isinstance(backend, EmptyOCRBackend):
-        raise RuntimeError("No OCR backend is available; see the error above")
+        raise OCRBackendUnavailable(
+            "No OCR backend is available; see the error above"
+        )
     return backend
 
 
