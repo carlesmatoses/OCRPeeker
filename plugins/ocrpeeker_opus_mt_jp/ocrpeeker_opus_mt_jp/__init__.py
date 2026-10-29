@@ -75,8 +75,12 @@ class OpusMTTranslatorJP(Translator):
         import pykakasi
         from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
-        source = config.get(config.TRANSLATION_CONFIG, "source_lang")
-        target = config.get(config.TRANSLATION_CONFIG, "target_lang")
+        source = config.get_or_default(
+            config.TRANSLATION_CONFIG, "source_lang"
+        )
+        target = config.get_or_default(
+            config.TRANSLATION_CONFIG, "target_lang"
+        )
         model_name = f"Helsinki-NLP/opus-mt-{source}-{target}"
         self._tokenizer = AutoTokenizer.from_pretrained(model_name)
         self._model = AutoModelForSeq2SeqLM.from_pretrained(model_name)

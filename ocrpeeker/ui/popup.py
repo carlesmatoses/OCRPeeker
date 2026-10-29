@@ -8,9 +8,13 @@ from ocrpeeker.translation.types import TranslationRow
 
 class ResultWindow:
     def __init__(self):
-        self._w = int(config.get(config.UI_CONFIG, "window_width"))
-        self._min_h = int(config.get(config.UI_CONFIG, "window_min_height"))
-        self._img_h = int(config.get(config.UI_CONFIG, "image_height"))
+        self._w = int(config.get_or_default(config.UI_CONFIG, "window_width"))
+        self._min_h = int(
+            config.get_or_default(config.UI_CONFIG, "window_min_height")
+        )
+        self._img_h = int(
+            config.get_or_default(config.UI_CONFIG, "image_height")
+        )
 
         self._root = tk.Tk()
         self._root.title("OCRPeeker")

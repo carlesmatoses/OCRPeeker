@@ -42,23 +42,19 @@ This installs one executable into `~/.local/bin`:
 
 ### Configuration
 
-`~/.config/ocrpeeker/config.ini` is created automatically on first run. New keys added in future versions are merged in automatically without overwriting your existing values.
+`~/.config/ocrpeeker/config.ini` is created automatically on first run, and is
+never rewritten afterwards. Keys introduced by a later version are not inserted
+into an existing file — their defaults apply until you add them yourself. Keys
+that a later version stops using are likewise left in place and ignored.
 
 ```ini
 [OCR]
 engine = manga-ocr
-language = ja
 
 [TRANSLATION]
 engine = opus-mt-jp
 source_lang = ja
 target_lang = en
-
-[ANKI]
-server = http://127.0.0.1:8765
-deck = Japanese
-model = Basic
-tags = OCRPeeker
 
 [UI]
 window_width = 460

@@ -11,22 +11,15 @@ CONFIG_FILE = CONFIG_DIR / "config.ini"
 
 OCR_CONFIG = "OCR"
 TRANSLATION_CONFIG = "TRANSLATION"
-ANKI_CONFIG = "ANKI"
 UI_CONFIG = "UI"
 SEGMENTER_CONFIG = "SEGMENTER"
 
 DEFAULTS = {
-    OCR_CONFIG: {"engine": "manga-ocr", "language": "ja"},
+    OCR_CONFIG: {"engine": "manga-ocr"},
     TRANSLATION_CONFIG: {
         "engine": "opus-mt-jp",
         "source_lang": "ja",
         "target_lang": "en",
-    },
-    ANKI_CONFIG: {
-        "server": "http://127.0.0.1:8765",
-        "deck": "Japanese",
-        "model": "Basic",
-        "tags": "OCRPeeker",
     },
     UI_CONFIG: {
         "window_width": "460",
@@ -61,37 +54,31 @@ def _read() -> ConfigParser:
 
 
 def get(section: str, key: str) -> str:
+    """Read a key, raising KeyError if it is missing.
+
+    For keys this module does not know about -- a plugin's own settings --
+    this is the only option. For anything in DEFAULTS, prefer
+    get_or_default() so an older config file cannot crash the caller.
+    """
     return _read()[section][key]
-
-
-def get_section(section: str) -> dict:
-    return dict(_read()[section])
-
-
-def set(section: str, key: str, value: str) -> None:
-    cp = _read()
-    if section not in cp:
-        cp[section] = {}
-    cp[section][key] = value
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        cp.write(f)
-
-
-def get_ocr_engine() -> str:
-    return get(OCR_CONFIG, "engine")
-
-
-def get_translation_engine() -> str:
-    return get(TRANSLATION_CONFIG, "engine")
 
 
 def get_or_default(section: str, key: str) -> str:
     """Like get(), but falls back to DEFAULTS.
 
-    The config file is only written on first run, so sections added later
-    (such as [SEGMENTER]) are missing from existing users' files.
+    The config file is only written on first run, so a key or whole section
+    added in a later version is missing from existing users' files. Only
+    works for keys present in DEFAULTS.
     """
     return _read().get(section, key, fallback=DEFAULTS[section][key])
+
+
+def get_ocr_engine() -> str:
+    return get_or_default(OCR_CONFIG, "engine")
+
+
+def get_translation_engine() -> str:
+    return get_or_default(TRANSLATION_CONFIG, "engine")
 
 
 def get_segmenter_engine() -> str:
