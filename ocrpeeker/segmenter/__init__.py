@@ -6,8 +6,6 @@ from ocrpeeker.errors import SegmenterUnavailable
 
 from .base import Box, EmptySegmenter, Segmenter
 from .pages import (
-    count_pages,
-    iter_page_loaders,
     iter_pages,
     load_pages,
 )
