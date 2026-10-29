@@ -11,16 +11,6 @@ from .pages import (
 
 logger = logging.getLogger(__name__)
 
-__all__ = [
-    "Box",
-    "Segmenter",
-    "iter_pages",
-    "iter_page_loaders",
-    "load_pages",
-    "count_pages",
-    "segment",
-]
-
 _REGISTRY: dict[str, type[Segmenter]] = {}
 
 
@@ -37,15 +27,13 @@ def error_unknown_segmenter(name: str):
         )
 
     logger.error(
-        f"""
-Unknown image segmenter: {name}
-
-Available image segmenters:
-{available}
-
-Select one by setting `segmenter` under [SEGMENTER] in {config.CONFIG_FILE},
-or pass --segmenter on the command line.
-""".strip()
+        (
+            f"Unknown image segmenter: {name}\n"
+            + "Available image segmenters:\n"
+            + f"{available}\n"
+            + f"Select one by setting `segmenter` under [SEGMENTER] in {config.CONFIG_FILE},\n"
+            "or pass --segmenter on the command line.\n"
+        ).strip()
     )
 
 
