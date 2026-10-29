@@ -50,7 +50,7 @@ class MangaSegmenter(Segmenter):
         )[0]
 
         return [
-            normalize_xyxy(*box.tolist(), width, height)
+            normalize_xyxy(*box.tolist(), width=width, height=height)
             for label, box in zip(result["labels"].tolist(), result["boxes"])
             if label in self.text_label_ids
         ]
