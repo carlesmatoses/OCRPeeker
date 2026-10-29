@@ -7,14 +7,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["Box", "Segmenter", "iter_pages", "iter_page_loaders", "load_pages", "count_pages", "segment"]
+__all__ = [
+    "Box",
+    "Segmenter",
+    "iter_pages",
+    "iter_page_loaders",
+    "load_pages",
+    "count_pages",
+    "segment",
+]
 
 _REGISTRY: Dict[str, Type[Segmenter]] = {}
 
 
 def error_unknown_segmenter(name: str):
     if _REGISTRY:
-        available = "\n".join(f"    {segmenter}" for segmenter in sorted(_REGISTRY))
+        available = "\n".join(
+            f"    {segmenter}" for segmenter in sorted(_REGISTRY)
+        )
     else:
         available = (
             "    (none installed)\n"
@@ -54,9 +64,11 @@ def load_plugins():
         register(ep.name, backend_cls)
 
 
-def segment(source, segmenter: str | Segmenter | None = None) -> list[list[Box]]:
+def segment(
+    source, segmenter: str | Segmenter | None = None
+) -> list[list[Box]]:
     """Find the text regions on every page of `source`.
-    
+
     Returns one list of normalized Boxes per page.
     """
     segmenter = resolve(segmenter)

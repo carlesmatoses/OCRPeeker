@@ -35,7 +35,9 @@ class TranslationRow:
         self.italic = italic
         self.actions = actions or []
 
-    def render(self, parent: tk.Widget, copy_btn_factory: Callable) -> tk.Frame:
+    def render(
+        self, parent: tk.Widget, copy_btn_factory: Callable
+    ) -> tk.Frame:
         """
         Render this row into parent and return the frame.
 
@@ -49,20 +51,35 @@ class TranslationRow:
         frame = tk.Frame(parent, bg="#1e1e2e")
 
         tk.Label(
-            frame, text=self.text, bg="#1e1e2e", fg=self.color,
-            font=font, wraplength=400, justify="left", anchor="w",
+            frame,
+            text=self.text,
+            bg="#1e1e2e",
+            fg=self.color,
+            font=font,
+            wraplength=400,
+            justify="left",
+            anchor="w",
         ).pack(side="left", fill="x", expand=True)
 
         for action in self.actions:
             tk.Button(
-                frame, text=action.label,
+                frame,
+                text=action.label,
                 command=action.on_click,
-                bg="#313244", fg="#cdd6f4", relief="flat",
-                font=("Sans", 9), cursor="hand2",
-                activebackground="#45475a", activeforeground="#cdd6f4",
-                bd=0, padx=6, pady=2,
+                bg="#313244",
+                fg="#cdd6f4",
+                relief="flat",
+                font=("Sans", 9),
+                cursor="hand2",
+                activebackground="#45475a",
+                activeforeground="#cdd6f4",
+                bd=0,
+                padx=6,
+                pady=2,
             ).pack(side="right", padx=(4, 0))
 
-        copy_btn_factory(frame, lambda: self.text).pack(side="right", padx=(4, 0))
+        copy_btn_factory(frame, lambda: self.text).pack(
+            side="right", padx=(4, 0)
+        )
 
         return frame

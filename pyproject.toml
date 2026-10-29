@@ -43,3 +43,10 @@ ocrpeeker-manga-ocr = { workspace = true, editable = true }
 ocrpeeker-opus-mt = { workspace = true, editable = true }
 ocrpeeker-opus-mt-jp = { workspace = true, editable = true }
 ocrpeeker-manga-segmenter = { workspace = true, editable = true }
+
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+extend-select = ["I"]

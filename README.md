@@ -258,7 +258,7 @@ ocrpeeker segment page.png | jq '.pages[0].boxes'
 ```python
 from ocrpeeker.segmenter import segment
 
-pages = segment("book.pdf")          # list[list[Box]]
+pages = segment("book.pdf")  # list[list[Box]]
 for p, boxes in enumerate(pages):
     for box in boxes:
         x, y, w, h = box
@@ -303,8 +303,10 @@ The engines come from `config.ini` and can be overridden with `--segmenter`, `--
 ```python
 from ocrpeeker.annotate import annotate
 
-doc = annotate("book.pdf")                         # whole job in memory
-doc = annotate("book.pdf", state=doc, on_page=save) # resume, with a checkpoint callback
+doc = annotate("book.pdf")  # whole job in memory
+doc = annotate(
+    "book.pdf", state=doc, on_page=save
+)  # resume, with a checkpoint callback
 ```
 
 ---
@@ -341,6 +343,7 @@ The entry point key (`my-ocr`) is what users set in `config.ini` under `[OCR] en
 ```python
 from PIL import Image
 from ocrpeeker.ocr.base import OCRBackend
+
 
 class MyOCRBackend(OCRBackend):
     def __init__(self):
@@ -381,10 +384,12 @@ my-translator = "ocrpeeker_my_translator:MyTranslator"
 from ocrpeeker.translation.base import Translator
 from ocrpeeker.translation.types import TranslationRow
 
+
 class MyTranslator(Translator):
     def __init__(self):
         # Load your model here — called once at daemon startup.
         from ocrpeeker import config
+
         self._source = config.get(config.TRANSLATION_CONFIG, "source_lang")
         self._target = config.get(config.TRANSLATION_CONFIG, "target_lang")
 
@@ -395,7 +400,9 @@ class MyTranslator(Translator):
     # Optional: override rows() to change what the popup shows. It receives the
     # source text and the finished translation, and must not translate again.
     def rows(self, text: str, translation: str) -> list[TranslationRow]:
-        return [TranslationRow(text=translation, color="#a6e3a1", font_size=11)]
+        return [
+            TranslationRow(text=translation, color="#a6e3a1", font_size=11)
+        ]
 ```
 
 `translate()` is the only required method. By default, `rows()` shows the translation as a single row.
@@ -417,8 +424,12 @@ A translator showing multiple rows for a Japanese input:
 def rows(self, text, translation):
     annotated, romanji = ...  # derived from `text`, e.g. with pykakasi
     return [
-        TranslationRow(text=annotated,  color="#89b4fa", font_family="Noto Sans CJK JP"),
-        TranslationRow(text=romanji,    color="#6c7086", font_size=10, italic=True),
+        TranslationRow(
+            text=annotated, color="#89b4fa", font_family="Noto Sans CJK JP"
+        ),
+        TranslationRow(
+            text=romanji, color="#6c7086", font_size=10, italic=True
+        ),
         TranslationRow(text=translation, color="#a6e3a1"),
     ]
 ```
@@ -437,6 +448,7 @@ my-segmenter = "ocrpeeker_my_segmenter:MySegmenter"
 ```python
 from PIL import Image
 from ocrpeeker.segmenter.base import Box, Segmenter, normalize_xyxy
+
 
 class MySegmenter(Segmenter):
     def __init__(self):

@@ -1,13 +1,20 @@
+"""
+inter-process communication
+"""
+
+import logging
+import os
 import socket
 import struct
 import sys
-import os
-import logging
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-SOCKET_PATH = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")) / "ocrpeeker.sock"
+SOCKET_PATH = (
+    Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}"))
+    / "ocrpeeker.sock"
+)
 
 _HEADER = struct.Struct("!I")
 MAX_MESSAGE_BYTES = 64 * 1024 * 1024
@@ -31,7 +38,9 @@ def _recv_exactly(conn: socket.socket, n: int) -> bytes | None:
         if not chunk:
             if remaining == n:
                 return None
-            raise ProtocolError(f"truncated message: wanted {n} bytes, got {n - remaining}")
+            raise ProtocolError(
+                f"truncated message: wanted {n} bytes, got {n - remaining}"
+            )
         chunks.append(chunk)
         remaining -= len(chunk)
     return b"".join(chunks)
@@ -46,9 +55,11 @@ def send_message(cmd: str, payload: bytes = b"") -> None:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
             s.connect(str(SOCKET_PATH))
             s.sendall(_HEADER.pack(len(body)) + body)
-    except (FileNotFoundError, ConnectionRefusedError):
+    except FileNotFoundError, ConnectionRefusedError:
         # No socket, or a stale one left behind by a daemon that died.
-        logger.error(f"OCRPeeker daemon is not running (no socket at {SOCKET_PATH})")
+        logger.error(
+            f"OCRPeeker daemon is not running (no socket at {SOCKET_PATH})"
+        )
         sys.exit(1)
 
 

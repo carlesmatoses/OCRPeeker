@@ -1,5 +1,7 @@
 import tkinter as tk
+
 from PIL import Image, ImageTk
+
 from ocrpeeker import config
 from ocrpeeker.translation.types import TranslationRow
 
@@ -25,12 +27,18 @@ class ResultWindow:
 
     def _clip_btn(self, parent, get_text):
         return tk.Button(
-            parent, text="⎘",
+            parent,
+            text="⎘",
             command=lambda: self._copy(get_text()),
-            bg="#1e1e2e", fg="#6c7086", relief="flat",
-            font=("Sans", 11), cursor="hand2",
-            activebackground="#1e1e2e", activeforeground="#cdd6f4",
-            bd=0, highlightthickness=0,
+            bg="#1e1e2e",
+            fg="#6c7086",
+            relief="flat",
+            font=("Sans", 11),
+            cursor="hand2",
+            activebackground="#1e1e2e",
+            activeforeground="#cdd6f4",
+            bd=0,
+            highlightthickness=0,
         )
 
     def _copy(self, text):
@@ -54,8 +62,11 @@ class ResultWindow:
         img_row.pack(fill="x", padx=pad, pady=(pad, 8))
 
         self._canvas = tk.Canvas(
-            img_row, bg="#1e1e2e", highlightthickness=0,
-            width=W - pad, height=self._img_h,
+            img_row,
+            bg="#1e1e2e",
+            highlightthickness=0,
+            width=W - pad,
+            height=self._img_h,
         )
         self._canvas.pack(side="left", expand=True)
         self._canvas_img = self._canvas.create_image(
@@ -63,7 +74,9 @@ class ResultWindow:
         )
 
         self._img_text = ""
-        self._clip_btn(img_row, lambda: self._img_text).pack(side="right", anchor="n")
+        self._clip_btn(img_row, lambda: self._img_text).pack(
+            side="right", anchor="n"
+        )
 
         tk.Frame(self._root, bg="#313244", height=1).pack(fill="x", padx=pad)
 
@@ -72,14 +85,21 @@ class ResultWindow:
         ocr_row.pack(fill="x", padx=pad, pady=(8, 4))
 
         self._ocr_label = tk.Label(
-            ocr_row, text="", bg="#1e1e2e", fg="#cdd6f4",
-            font=("Noto Sans CJK JP", 13), wraplength=W - 60,
-            justify="left", anchor="w",
+            ocr_row,
+            text="",
+            bg="#1e1e2e",
+            fg="#cdd6f4",
+            font=("Noto Sans CJK JP", 13),
+            wraplength=W - 60,
+            justify="left",
+            anchor="w",
         )
         self._ocr_label.pack(side="left", fill="x", expand=True)
 
         self._ocr_text = ""
-        self._clip_btn(ocr_row, lambda: self._ocr_text).pack(side="right", anchor="n")
+        self._clip_btn(ocr_row, lambda: self._ocr_text).pack(
+            side="right", anchor="n"
+        )
 
         tk.Frame(self._root, bg="#313244", height=1).pack(fill="x", padx=pad)
 
@@ -100,7 +120,9 @@ class ResultWindow:
                     fill="x", pady=(4, 0)
                 )
 
-    def update(self, text: str, rows: list[TranslationRow], image: Image.Image):
+    def update(
+        self, text: str, rows: list[TranslationRow], image: Image.Image
+    ):
         self._ocr_text = text
         self._img_text = text
 

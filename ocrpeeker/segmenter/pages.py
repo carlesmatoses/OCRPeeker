@@ -4,6 +4,7 @@ RGB PIL images, one per page, in reading order.
 iter_pages yields one decoded page at a time, so a whole book is never held
 in memory at once; load_pages is the eager list form of the same thing.
 """
+
 import io
 import re
 import zipfile
@@ -14,7 +15,16 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tif", ".tiff"}
+IMAGE_SUFFIXES = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".bmp",
+    ".gif",
+    ".tif",
+    ".tiff",
+}
 ARCHIVE_SUFFIXES = {".cbz", ".zip"}
 PDF_SUFFIX = ".pdf"
 PDF_DPI = 150
@@ -24,7 +34,10 @@ PageLoader = Callable[[], Image.Image]
 
 def _natural_key(name: str):
     """Sort key so that "2.jpg" comes before "10.jpg"."""
-    return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", name)]
+    return [
+        int(part) if part.isdigit() else part.lower()
+        for part in re.split(r"(\d+)", name)
+    ]
 
 
 def _finalize(image: Image.Image) -> Image.Image:
@@ -34,12 +47,19 @@ def _finalize(image: Image.Image) -> Image.Image:
 
 def _is_ndarray(source) -> bool:
     # Checked by name so numpy is only imported by callers that already use it.
-    return type(source).__module__ == "numpy" and type(source).__name__ == "ndarray"
+    return (
+        type(source).__module__ == "numpy"
+        and type(source).__name__ == "ndarray"
+    )
 
 
 def _directory_files(path: Path) -> list[Path]:
     files = sorted(
-        (p for p in path.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_SUFFIXES),
+        (
+            p
+            for p in path.iterdir()
+            if p.is_file() and p.suffix.lower() in IMAGE_SUFFIXES
+        ),
         key=lambda p: _natural_key(p.name),
     )
     if not files:
@@ -50,8 +70,10 @@ def _directory_files(path: Path) -> list[Path]:
 def _archive_names(archive: zipfile.ZipFile) -> list[str]:
     return sorted(
         (
-            info.filename for info in archive.infolist()
-            if not info.is_dir() and Path(info.filename).suffix.lower() in IMAGE_SUFFIXES
+            info.filename
+            for info in archive.infolist()
+            if not info.is_dir()
+            and Path(info.filename).suffix.lower() in IMAGE_SUFFIXES
         ),
         key=_natural_key,
     )
@@ -79,12 +101,16 @@ def _path_loaders(path: Path) -> Iterator[PageLoader]:
     if suffix in ARCHIVE_SUFFIXES:
         with zipfile.ZipFile(path) as archive:
             for name in _archive_names(archive):
-                yield lambda name=name: _finalize(Image.open(io.BytesIO(archive.read(name))))
+                yield lambda name=name: _finalize(
+                    Image.open(io.BytesIO(archive.read(name)))
+                )
     elif suffix == PDF_SUFFIX:
         pdf = _open_pdf(path)
         try:
             for index in range(len(pdf)):
-                yield lambda index=index: _finalize(pdf[index].render(scale=PDF_DPI / 72).to_pil())
+                yield lambda index=index: _finalize(
+                    pdf[index].render(scale=PDF_DPI / 72).to_pil()
+                )
         finally:
             pdf.close()
     else:

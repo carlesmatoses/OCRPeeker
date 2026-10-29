@@ -1,9 +1,12 @@
+import os
+import shutil
 from configparser import ConfigParser
 from pathlib import Path
-import shutil
-import os
 
-CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ocrpeeker"
+CONFIG_DIR = (
+    Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    / "ocrpeeker"
+)
 CONFIG_FILE = CONFIG_DIR / "config.ini"
 
 OCR_CONFIG = "OCR"
@@ -14,9 +17,22 @@ SEGMENTER_CONFIG = "SEGMENTER"
 
 DEFAULTS = {
     OCR_CONFIG: {"engine": "manga-ocr", "language": "ja"},
-    TRANSLATION_CONFIG: {"engine": "opus-mt-jp", "source_lang": "ja", "target_lang": "en"},
-    ANKI_CONFIG: {"server": "http://127.0.0.1:8765", "deck": "Japanese", "model": "Basic", "tags": "OCRPeeker"},
-    UI_CONFIG: {"window_width": "460", "window_min_height": "200", "image_height": "150"},
+    TRANSLATION_CONFIG: {
+        "engine": "opus-mt-jp",
+        "source_lang": "ja",
+        "target_lang": "en",
+    },
+    ANKI_CONFIG: {
+        "server": "http://127.0.0.1:8765",
+        "deck": "Japanese",
+        "model": "Basic",
+        "tags": "OCRPeeker",
+    },
+    UI_CONFIG: {
+        "window_width": "460",
+        "window_min_height": "200",
+        "image_height": "150",
+    },
     SEGMENTER_CONFIG: {"segmenter": "manga-segmenter", "threshold": "0.5"},
 }
 

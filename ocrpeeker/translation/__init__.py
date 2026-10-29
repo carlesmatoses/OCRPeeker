@@ -12,7 +12,9 @@ _REGISTRY: Dict[str, Type[Translator]] = {}
 
 def error_unknown_translator(name: str):
     if _REGISTRY:
-        available = "\n".join(f"    {backend}" for backend in sorted(_REGISTRY))
+        available = "\n".join(
+            f"    {backend}" for backend in sorted(_REGISTRY)
+        )
     else:
         available = (
             "    (none installed)\n"

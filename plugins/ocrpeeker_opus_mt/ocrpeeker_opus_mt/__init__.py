@@ -5,6 +5,7 @@ from ocrpeeker import config
 class OpusMTTranslator(Translator):
     def __init__(self):
         from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
         source = config.get(config.TRANSLATION_CONFIG, "source_lang")
         target = config.get(config.TRANSLATION_CONFIG, "target_lang")
         model_name = f"Helsinki-NLP/opus-mt-{source}-{target}"

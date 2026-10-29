@@ -1,5 +1,6 @@
 import argparse
 import logging
+
 from ocrpeeker import ipc
 
 
@@ -14,7 +15,9 @@ def _configure_logging(verbose: bool):
         level=logging.WARNING,
         format="%(levelname)s: %(message)s",
     )
-    logging.getLogger("ocrpeeker").setLevel(logging.DEBUG if verbose else logging.INFO)
+    logging.getLogger("ocrpeeker").setLevel(
+        logging.DEBUG if verbose else logging.INFO
+    )
 
 
 def main():
@@ -23,7 +26,9 @@ def main():
         description="Screen overlay OCR and translation tool",
     )
     parser.add_argument(
-        "-v", "--verbose", action="store_true",
+        "-v",
+        "--verbose",
+        action="store_true",
         help="Show debug output (must come before the command)",
     )
     sub = parser.add_subparsers(dest="cmd")
@@ -36,26 +41,47 @@ def main():
         "segment",
         help="Find text regions in a manga/comic and print them as JSON (no daemon needed)",
     )
-    seg.add_argument("input", help="Image, folder of images, .cbz/.zip archive or .pdf")
-    seg.add_argument("-o", "--output", help="Write the JSON here instead of stdout")
-    seg.add_argument("--segmenter", help="Segmenter plugin to use (default: [SEGMENTER] in config)")
+    seg.add_argument(
+        "input", help="Image, folder of images, .cbz/.zip archive or .pdf"
+    )
+    seg.add_argument(
+        "-o", "--output", help="Write the JSON here instead of stdout"
+    )
+    seg.add_argument(
+        "--segmenter",
+        help="Segmenter plugin to use (default: [SEGMENTER] in config)",
+    )
 
     ann = sub.add_parser(
         "annotate",
         help="Segment, OCR and translate every text region of a manga/comic into JSON",
     )
-    ann.add_argument("input", help="Image, folder of images, .cbz/.zip archive or .pdf")
-    ann.add_argument("-o", "--output", help="Write the JSON here, saving after every page")
-    ann.add_argument("--resume", action="store_true", help="Continue the job saved in --output")
-    ann.add_argument("--segmenter", help="Segmenter plugin (default: [SEGMENTER] in config)")
+    ann.add_argument(
+        "input", help="Image, folder of images, .cbz/.zip archive or .pdf"
+    )
+    ann.add_argument(
+        "-o", "--output", help="Write the JSON here, saving after every page"
+    )
+    ann.add_argument(
+        "--resume",
+        action="store_true",
+        help="Continue the job saved in --output",
+    )
+    ann.add_argument(
+        "--segmenter", help="Segmenter plugin (default: [SEGMENTER] in config)"
+    )
     ann.add_argument("--ocr", help="OCR plugin (default: [OCR] in config)")
-    ann.add_argument("--translator", help="Translation plugin (default: [TRANSLATION] in config)")
+    ann.add_argument(
+        "--translator",
+        help="Translation plugin (default: [TRANSLATION] in config)",
+    )
 
     args = parser.parse_args()
     _configure_logging(args.verbose)
 
     if args.cmd is None:
         from ocrpeeker import daemon
+
         daemon.main()
         return
 
@@ -80,7 +106,7 @@ def _capture():
     Selecting a region blocks until the user finishes dragging, which is why it
     must not happen in the daemon: that would freeze its Tk event loop.
     """
-    from ocrpeeker.ui.capture import select_region, capture_png_bytes
+    from ocrpeeker.ui.capture import capture_png_bytes, select_region
 
     region = select_region()
     if region is None:
@@ -96,19 +122,28 @@ def _segment(args):
     """
     import json
     import sys
-    from ocrpeeker import config
-    from ocrpeeker import segmenter
+
+    from ocrpeeker import config, segmenter
 
     name = args.segmenter or config.get_segmenter_engine()
     try:
         pages = segmenter.segment(args.input, name)
-    except (RuntimeError, FileNotFoundError, ImportError, TypeError, OSError) as exc:
+    except (
+        RuntimeError,
+        FileNotFoundError,
+        ImportError,
+        TypeError,
+        OSError,
+    ) as exc:
         logging.getLogger("ocrpeeker").error(str(exc))
         sys.exit(1)
 
     result = {
         "segmenter": name,
-        "pages": [{"page": i, "boxes": [list(box) for box in boxes]} for i, boxes in enumerate(pages)],
+        "pages": [
+            {"page": i, "boxes": [list(box) for box in boxes]}
+            for i, boxes in enumerate(pages)
+        ],
     }
     text = json.dumps(result, indent=2)
     if args.output:
@@ -128,12 +163,15 @@ def _annotate(args, parser):
     import os
     import sys
     from pathlib import Path
+
     from ocrpeeker.annotate import annotate
     from ocrpeeker.segmenter import count_pages
 
     log = logging.getLogger("ocrpeeker")
     if args.resume and not args.output:
-        parser.error("--resume needs --output, the file holding the job to continue")
+        parser.error(
+            "--resume needs --output, the file holding the job to continue"
+        )
 
     source = str(Path(args.input).resolve())
     state = None
@@ -145,12 +183,18 @@ def _annotate(args, parser):
             log.error(f"Cannot resume from {args.output}: {exc}")
             sys.exit(1)
         if state.get("source") != source:
-            log.error(f"{args.output} belongs to {state.get('source')}, not {source}")
+            log.error(
+                f"{args.output} belongs to {state.get('source')}, not {source}"
+            )
             sys.exit(1)
         if len(state.get("pages", [])) > count_pages(source):
-            log.error(f"{args.output} has more pages than {source}; the input has changed")
+            log.error(
+                f"{args.output} has more pages than {source}; the input has changed"
+            )
             sys.exit(1)
-        log.info(f"Resuming {args.output} ({len(state['pages'])} pages segmented)")
+        log.info(
+            f"Resuming {args.output} ({len(state['pages'])} pages segmented)"
+        )
 
     def save(state):
         # Write then rename, so a crash mid-write never corrupts the checkpoint.
@@ -168,7 +212,13 @@ def _annotate(args, parser):
             state=state,
             on_page=save if args.output else None,
         )
-    except (RuntimeError, FileNotFoundError, ImportError, TypeError, OSError) as exc:
+    except (
+        RuntimeError,
+        FileNotFoundError,
+        ImportError,
+        TypeError,
+        OSError,
+    ) as exc:
         log.error(str(exc))
         sys.exit(1)
 

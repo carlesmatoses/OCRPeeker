@@ -8,14 +8,18 @@ class Box(NamedTuple):
 
     (x, y) is the top-left corner; w and h are the width and height.
     """
+
     x: float
     y: float
     w: float
     h: float
 
 
-def normalize_xyxy(x0: float, y0: float, x1: float, y1: float, width: int, height: int) -> Box:
+def normalize_xyxy(
+    x0: float, y0: float, x1: float, y1: float, width: int, height: int
+) -> Box:
     """Convert a pixel (x0, y0, x1, y1) box into a normalized Box, clamped to the page."""
+
     def clamp(v: float) -> float:
         return min(max(v, 0.0), 1.0)
 

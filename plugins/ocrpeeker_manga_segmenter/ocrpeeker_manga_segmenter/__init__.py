@@ -14,19 +14,32 @@ class MangaSegmenter(Segmenter):
 
     def __init__(self):
         import torch
-        from transformers import AutoImageProcessor, AutoModelForObjectDetection
+        from transformers import (
+            AutoImageProcessor,
+            AutoModelForObjectDetection,
+        )
 
         self._torch = torch
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.processor = AutoImageProcessor.from_pretrained(MODEL_ID)
-        self.model = AutoModelForObjectDetection.from_pretrained(MODEL_ID).to(self.device).eval()
-        self.threshold = float(config.get_or_default(config.SEGMENTER_CONFIG, "threshold"))
+        self.model = (
+            AutoModelForObjectDetection.from_pretrained(MODEL_ID)
+            .to(self.device)
+            .eval()
+        )
+        self.threshold = float(
+            config.get_or_default(config.SEGMENTER_CONFIG, "threshold")
+        )
         self.text_label_ids = {
-            int(i) for i, label in self.model.config.id2label.items() if label in TEXT_LABELS
+            int(i)
+            for i, label in self.model.config.id2label.items()
+            if label in TEXT_LABELS
         }
 
     def segment(self, image: Image.Image) -> list[Box]:
-        inputs = self.processor(images=image, return_tensors="pt").to(self.device)
+        inputs = self.processor(images=image, return_tensors="pt").to(
+            self.device
+        )
         with self._torch.inference_mode():
             outputs = self.model(**inputs)
 

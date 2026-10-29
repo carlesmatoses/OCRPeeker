@@ -15,9 +15,10 @@ Each note also carries "content", the transcript and translation rendered as
 one text field for consumers that want a ready-made note body. It is derived:
 rebuilt from the other two fields whenever a page changes, never edited directly.
 """
+
 import gc
-import sys
 import logging
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
@@ -25,10 +26,10 @@ from ocrpeeker import config
 from ocrpeeker import ocr as ocr_plugins
 from ocrpeeker import segmenter as segmenter_plugins
 from ocrpeeker import translation as translation_plugins
-from ocrpeeker.ocr.base import OCRBackend, EmptyOCRBackend
+from ocrpeeker.ocr.base import EmptyOCRBackend, OCRBackend
 from ocrpeeker.segmenter import Segmenter, count_pages, iter_page_loaders
 from ocrpeeker.segmenter.base import Box, crop_box
-from ocrpeeker.translation.base import Translator, EmptyTranslator
+from ocrpeeker.translation.base import EmptyTranslator, Translator
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,11 @@ def annotate(
         }
     else:
         # A resumed job keeps its backends unless the caller overrides one.
-        for key, backend in (("segmenter", segmenter), ("ocr", ocr), ("translator", translator)):
+        for key, backend in (
+            ("segmenter", segmenter),
+            ("ocr", ocr),
+            ("translator", translator),
+        ):
             if backend is not None:
                 state[key] = _name(backend, lambda: state[key])
     save = on_page or (lambda _state: None)
@@ -82,7 +87,9 @@ def annotate(
 
 def note_content(transcript: str | None, translation: str | None) -> str:
     """The note body: transcript and translation as a two-item list."""
-    return f"- transcript: {transcript or ''}\n- translation: {translation or ''}"
+    return (
+        f"- transcript: {transcript or ''}\n- translation: {translation or ''}"
+    )
 
 
 def _fill_content(page: dict):
@@ -116,13 +123,20 @@ def _segment_stage(source, segmenter, state: dict, total: int, save):
             continue
         logger.info(f"Segment page {index + 1}/{total}")
         boxes = segmenter.segment(load())
-        state["pages"].append({
-            "page": index,
-            "notes": [
-                {"box": list(box), "content": note_content(None, None), "transcript": None, "translation": None}
-                for box in boxes
-            ],
-        })
+        state["pages"].append(
+            {
+                "page": index,
+                "notes": [
+                    {
+                        "box": list(box),
+                        "content": note_content(None, None),
+                        "transcript": None,
+                        "translation": None,
+                    }
+                    for box in boxes
+                ],
+            }
+        )
         save(state)
 
     del segmenter
@@ -131,7 +145,8 @@ def _segment_stage(source, segmenter, state: dict, total: int, save):
 
 def _ocr_stage(source, backend, state: dict, total: int, save):
     pending = {
-        page["page"] for page in state["pages"]
+        page["page"]
+        for page in state["pages"]
         if any(note["transcript"] is None for note in page["notes"])
     }
     if not pending:
@@ -146,7 +161,9 @@ def _ocr_stage(source, backend, state: dict, total: int, save):
         image = load()
         for note in pages[index]["notes"]:
             if note["transcript"] is None:
-                note["transcript"] = backend.recognize(crop_box(image, Box(*note["box"])))
+                note["transcript"] = backend.recognize(
+                    crop_box(image, Box(*note["box"]))
+                )
         _fill_content(pages[index])
         save(state)
 
@@ -156,15 +173,21 @@ def _ocr_stage(source, backend, state: dict, total: int, save):
 
 def _translate_stage(translator, state: dict, save):
     pending = [
-        page for page in state["pages"]
-        if any(note["transcript"] and note["translation"] is None for note in page["notes"])
+        page
+        for page in state["pages"]
+        if any(
+            note["transcript"] and note["translation"] is None
+            for note in page["notes"]
+        )
     ]
     if not pending:
         return
 
     translator = _resolve_translator(translator)
     if isinstance(translator, EmptyTranslator):
-        logger.warning("No translator is available; translations are left empty")
+        logger.warning(
+            "No translator is available; translations are left empty"
+        )
         return
 
     for page in pending:

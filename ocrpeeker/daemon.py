@@ -1,20 +1,20 @@
+import io
+import logging
+import queue
 import socket
 import threading
-import queue
-import logging
-import io
+
 from PIL import Image
-from ocrpeeker import config
-from ocrpeeker import ipc
+
+from ocrpeeker import config, ipc
 from ocrpeeker.ipc import SOCKET_PATH
-from ocrpeeker.ui.popup import ResultWindow
 from ocrpeeker.ocr import get as get_ocr
 from ocrpeeker.ocr import load_plugins as load_ocr_plugins
 from ocrpeeker.ocr.base import EmptyOCRBackend
 from ocrpeeker.translation import get as get_translator
 from ocrpeeker.translation import load_plugins as load_translation_plugins
 from ocrpeeker.translation.base import EmptyTranslator
-
+from ocrpeeker.ui.popup import ResultWindow
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,9 @@ def main():
     logger.info(f"Loading OCR backend: {engine}")
     ocr_backend = get_ocr(engine)
     if isinstance(ocr_backend, EmptyOCRBackend):
-        logger.error("OCR is unavailable. Captures will be rejected until a backend is installed.")
+        logger.error(
+            "OCR is unavailable. Captures will be rejected until a backend is installed."
+        )
     else:
         logger.info("OCR ready.")
 
@@ -111,7 +113,9 @@ def main():
     logger.info(f"Loading translation backend: {translator}")
     translator_backend = get_translator(translator)
     if isinstance(translator_backend, EmptyTranslator):
-        logger.warning("Translation is unavailable. Captures will show OCR text only.")
+        logger.warning(
+            "Translation is unavailable. Captures will show OCR text only."
+        )
     else:
         logger.info("Translation ready.")
 
@@ -124,13 +128,17 @@ def main():
         try:
             while not event_queue.empty():
                 cmd, payload = event_queue.get_nowait()
-                logger.debug(f"Got command: {cmd!r} ({len(payload)} bytes payload)")
+                logger.debug(
+                    f"Got command: {cmd!r} ({len(payload)} bytes payload)"
+                )
                 if cmd == _QUIT:
                     window.hide()
                     window._root.quit()
                     return
                 if cmd == _CAPTURE:
-                    process_image(payload, ocr_backend, translator_backend, window)
+                    process_image(
+                        payload, ocr_backend, translator_backend, window
+                    )
                 if cmd == _TOGGLE:
                     window.toggle()
         except Exception:

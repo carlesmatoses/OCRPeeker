@@ -12,7 +12,9 @@ _REGISTRY: Dict[str, Type[OCRBackend]] = {}
 
 def error_unknown_ocr(name: str):
     if _REGISTRY:
-        available = "\n".join(f"    {backend}" for backend in sorted(_REGISTRY))
+        available = "\n".join(
+            f"    {backend}" for backend in sorted(_REGISTRY)
+        )
     else:
         available = (
             "    (none installed)\n"
@@ -50,11 +52,3 @@ def load_plugins():
     for ep in eps:
         backend_cls = ep.load()
         register(ep.name, backend_cls)
-
-
-
-
-
-
-
-
