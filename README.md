@@ -1,9 +1,6 @@
 # OCRPeeker
 
-> [!WARNING]
-> This README is under construction. Use it as a guide, not as ground truth.
-
-A Wayland-native screen OCR and translation tool for Hyprland. Select a region of your screen, OCR it, and display the result in a persistent popup with translation and romanisation support.
+A Wayland-native screen OCR and translation tool for Hyprland. Select a region of your screen, OCR it, and display the result in a persistent popup with translation and transcription support.
 
 ---
 
