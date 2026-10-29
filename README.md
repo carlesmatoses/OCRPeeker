@@ -196,6 +196,36 @@ Unlike `uv tool install`, `uv pip install` *is* additive — each line adds to t
 uv run ocrpeeker
 ```
 
+The daemon reports how long each backend took to load, and how long it took to
+become functional overall:
+
+```
+INFO: OCR backend 'manga-ocr' ready in 4.21s
+INFO: Translation backend 'opus-mt-jp' ready in 2.08s
+INFO: Daemon ready in 7.04s
+```
+
+Add `-v` for the breakdown — plugin discovery, config read, window setup, and
+the per-capture stage timings. Use it to check whether your plugin's `__init__`
+is loading its model too slowly, or whether inference is the real cost:
+
+```bash
+uv run ocrpeeker -v
+```
+
+```
+DEBUG: OCR plugin discovery took 1.8ms
+DEBUG: Translation plugin discovery took 412ms
+DEBUG: Config read took 0.4ms
+DEBUG: Result window ready in 48ms
+INFO: Capture processed in 1.84s
+DEBUG: Capture stages: decode 41ms, OCR 1.21s, translate 561ms, render 28ms
+```
+
+Discovery is timed per registry because it only imports the plugin modules —
+a plugin that does heavy work at module level (rather than in `__init__`) pays
+there instead of in its backend's load figure.
+
 ### Project structure
 
 ```
