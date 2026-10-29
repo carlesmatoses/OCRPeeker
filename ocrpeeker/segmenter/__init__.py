@@ -7,7 +7,6 @@ from ocrpeeker.errors import SegmenterUnavailable
 from .base import Box, EmptySegmenter, Segmenter
 from .pages import (
     iter_pages,
-    load_pages,
 )
 
 logger = logging.getLogger(__name__)
