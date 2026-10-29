@@ -1,8 +1,10 @@
-from typing import Dict, Type
-from .base import Translator, EmptyTranslator
-from importlib.metadata import entry_points
-from ocrpeeker import config
 import logging
+from importlib.metadata import entry_points
+from typing import Dict, Type
+
+from ocrpeeker import config
+
+from .base import EmptyTranslator, Translator
 
 logger = logging.getLogger(__name__)
 

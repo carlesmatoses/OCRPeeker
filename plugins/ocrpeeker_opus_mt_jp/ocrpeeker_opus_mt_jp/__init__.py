@@ -1,9 +1,11 @@
+import tkinter as tk
 from typing import Callable
+
+import pykakasi
+
+from ocrpeeker import config
 from ocrpeeker.translation.base import Translator
 from ocrpeeker.translation.types import TranslationRow
-from ocrpeeker import config
-import tkinter as tk
-import pykakasi
 
 
 class KanjiRow(TranslationRow):
@@ -70,8 +72,8 @@ class KanjiRow(TranslationRow):
 
 class OpusMTTranslatorJP(Translator):
     def __init__(self):
-        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
         import pykakasi
+        from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
         source = config.get(config.TRANSLATION_CONFIG, "source_lang")
         target = config.get(config.TRANSLATION_CONFIG, "target_lang")

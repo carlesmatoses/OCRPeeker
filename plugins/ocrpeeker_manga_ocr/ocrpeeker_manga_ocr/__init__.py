@@ -1,5 +1,6 @@
-from ocrpeeker.ocr.base import OCRBackend
 from PIL import Image
+
+from ocrpeeker.ocr.base import OCRBackend
 
 
 class MangaOCRBackend(OCRBackend):

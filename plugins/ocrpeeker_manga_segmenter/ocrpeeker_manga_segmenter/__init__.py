@@ -1,6 +1,7 @@
+from PIL import Image
+
 from ocrpeeker import config
 from ocrpeeker.segmenter.base import Box, Segmenter, normalize_xyxy
-from PIL import Image
 
 MODEL_ID = "ogkalu/comic-text-and-bubble-detector"
 

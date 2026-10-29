@@ -1,10 +1,10 @@
-from ocrpeeker.translation.base import Translator
 from ocrpeeker import config
+from ocrpeeker.translation.base import Translator
 
 
 class OpusMTTranslator(Translator):
     def __init__(self):
-        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+        from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
         source = config.get(config.TRANSLATION_CONFIG, "source_lang")
         target = config.get(config.TRANSLATION_CONFIG, "target_lang")
